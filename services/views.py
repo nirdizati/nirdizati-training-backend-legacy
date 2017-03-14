@@ -282,8 +282,8 @@ def ML_methods(df, state_list, query_name):
     plot_df[method] = y_lasso
     # Version includes: query + baseline + qmethod list
     V = "Level3"
-    write_pandas_to_csv(plot_df,V,out = True)
-    return
+    results_filename = write_pandas_to_csv(plot_df,V,out = True)
+    return results_filename
 
 def read_into_panda_from_csv(path):
 
@@ -376,10 +376,14 @@ def is_empty(any_structure):
 # def encode_sequence(df):
 def write_pandas_to_csv(df, version, out):
     # df = df.reset_index(drop=True)
+    filename = ''
     if out == False:
-        df.to_csv('Query_Remaining_Time' + str(version) + '.csv',sep=',')
+        filename = 'Query_Remaining_Time' + str(version) + '.csv'
+        df.to_csv(filename,sep=',')
     else:
+        filename = 'Results/' + str(version) + '.csv'
         df.to_csv('Results/' + str(version) + '.csv', sep=',')
+    return filename
 
 
 def create_initial_log(path):
@@ -387,16 +391,18 @@ def create_initial_log(path):
     add_next_state(df)
     add_query_remaining(df)
     #df = clean_outliers(df)
-    version = "V_events_0"
-    write_pandas_to_csv(df, version, False)
+    os.path.splitext(path)[0]
+    version = "_level_0"
+    filename = write_pandas_to_csv(df, version, False)
+    return filename
 
 def order_csv_time(path):
     df = pio.read_csv(filepath_or_buffer=path, header=0, index_col=0)  # , nrows= 20)
     df = df.sort(['timestamp'], ascending=True)
     df = df.reset_index(drop=True)
     version = "V_events_0_ordered"
-    write_pandas_to_csv(df, version, False)
-
+    filename = write_pandas_to_csv(df, version, False)
+    return filename
 
 def read_from_query(path):
     df = pio.read_csv(filepath_or_buffer=path, header=0, index_col=0)  # ,nrows = 1000)
@@ -551,8 +557,9 @@ def queue_level(path_query):
     state_list = get_states(df)
     df = add_queues(df, state_list)
     version = "V_events_3"
-    write_pandas_to_csv(df, version, False)
-    return
+    filename = write_pandas_to_csv(df, version, False)
+    return filename
+
 def get_prefixes(df):
     memorylen = 3
     pref_list = []
@@ -593,8 +600,8 @@ def multiclass(path_query):
     pref_list = get_prefixes(df)
     df = add_mc_queues(df, pref_list)
     version = "V_events_4"
-    write_pandas_to_csv(df, version, False)
-    return
+    filename = write_pandas_to_csv(df, version, False)
+    return filename
 
 def main(ML, qlength, Initial, Order, Multiclass):
     #path_orig = 'event_aggr_append_Arik.csv'
@@ -622,13 +629,19 @@ def main(ML, qlength, Initial, Order, Multiclass):
         state_list = get_prefixes(df)
         ML_methods(df, state_list, query_name)
 
+def handle_uploaded_file(f):
+    print 'handle file upload'
+    with open('sample.csv', 'wb+') as destination:
+        for chunk in f.chunks():
+            print chunk
+            print 'hello world'
+            destination.write(chunk)
+
 @csrf_exempt
 def index(request):
     response_data = {}
     response_data['result'] = 'error'
-    response_data['message'] = 'Some error messagesssss'
-    success = {}
-    success['message'] = 'successfully uploaded the file'
+    response_data['message'] = 'No request'
 
     print >> sys.stderr, 'Goodbye, cruel world!'
     if request.method == 'POST':
@@ -637,19 +650,28 @@ def index(request):
         filename = request.FILES['file'].name
 
         # encode the file -- level 0
-        create_initial_log(filename)
+        level0_file = create_initial_log(filename)
+        # encode the file -- level 1
+        level1_file = order_csv_time(level0_file)
+        # encode the file -- level 2
+        level2_file = queue_level(level1_file)
+        # encode the file -- level 3
+        level3_file = multiclass(level2_file)
 
-        return HttpResponse(json.dumps(success), content_type="application/json")
+        #make the predictions
+        query_name = 'remaining_time'
+        df = read_from_query(level3_file)
+        print df.head(20)
+        # state_list = get_states(df)
+        state_list = get_prefixes(df)
+        results_filename = ML_methods(df, state_list, query_name)
+
+        results = {}
+        results["message"] = "results in " + results_filename
+
+        return HttpResponse(json.dumps(results), content_type="application/json")
 
 
 	# .--00--rmain(ML=False,qlength=False, Initial=True, Order=False, Multiclass = False)
 
 	return HttpResponse(json.dumps(response_data), content_type="application/json")
-
-def handle_uploaded_file(f):
-    print 'handle file upload'
-    with open('sample.csv', 'wb+') as destination:
-        for chunk in f.chunks():
-            print chunk
-            print 'hello world'
-            destination.write(chunk)
