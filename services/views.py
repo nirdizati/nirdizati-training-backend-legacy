@@ -644,6 +644,7 @@ def index(request):
     response_data['message'] = 'No request'
 
     print >> sys.stderr, 'Goodbye, cruel world!'
+    print request.method
     if request.method == 'POST':
         print >> sys.stderr, 'POST detected'
         handle_uploaded_file(request.FILES['file'])
@@ -651,12 +652,12 @@ def index(request):
 
         # encode the file -- level 0
         level0_file = create_initial_log(filename)
-        # encode the file -- level 1
-        level1_file = order_csv_time(level0_file)
-        # encode the file -- level 2
-        level2_file = queue_level(level1_file)
+        # encode the file -- level 0 order file
+        level0_file_ordered = order_csv_time(level0_file)
+        # encode the file -- level 1 and 2
+        level2_file = queue_level(level0_file_ordered)
         # encode the file -- level 3
-        level3_file = multiclass(level2_file)
+        level3_file = multiclass(level0_file_ordered)
 
         #make the predictions
         query_name = 'remaining_time'
@@ -669,9 +670,17 @@ def index(request):
         results = {}
         results["message"] = "results in " + results_filename
 
+        results["data"] = read_from_query(results_filename)
+
         return HttpResponse(json.dumps(results), content_type="application/json")
+    else:
+        print 'here response'
+        return HttpResponse(json.dumps(response_data), content_type="application/json")
 
-
-	# .--00--rmain(ML=False,qlength=False, Initial=True, Order=False, Multiclass = False)
-
-	return HttpResponse(json.dumps(response_data), content_type="application/json")
+@csrf_exempt
+def results(request):
+    response_data = {}
+    response_data['result'] = 'error'
+    response_data['message'] = 'No request'
+    print 'here'
+    return HttpResponse(json.dumps(response_data), content_type="application/json")
