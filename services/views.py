@@ -239,7 +239,7 @@ def plot_results(df, test_list,state_list):
 
 
     plot_df = df.ix[test_list]
-    cols = ['elapsed_time', 'total_time', 'remaining_time']
+    cols = ['id', 'elapsed_time', 'total_time', 'remaining_time']
     plot_df = plot_df[cols]
     return plot_df
 
@@ -248,27 +248,41 @@ def ML_methods(df, state_list, query_name):
     train_df, test_df, train_list, test_list = prep_data(df, state_list, query_name)
     print "Training shape is: " + str(train_df.shape)
 
+    print "Fitting Linear Regression"
+    y_linear = linear_regression(train_df, test_df, query_name)
+
+    plot_df = plot_results(df, test_list,state_list)
+
+    method = 'LM_pred'
+    plot_df[method] = y_linear
+    # Version includes: query + baseline + qmethod list
+    V = "Level3"
+    results_filename = write_pandas_to_csv(plot_df,V,out = True)
+    return results_filename
+
+def prediction_methods(df, state_list, query_name):
+    train_df, test_df, train_list, test_list = prep_data(df, state_list, query_name)
     print "Fitting Random Forest"
     trees = [50]
-    #trees = []
+    # trees = []
     rf_results = []
     for t in trees:
         print "Number of trees: " + str(t)
         rf_results.append(random_Forest_regression(train_df, test_df, t, 2, query_name))
+
     print "Fitting XGBOOST"
     trees_xg = [2000]
     xg_results = []
     # used to be md = 100
     for t in trees_xg:
         print "Number of trees: " + str(t)
-        #xg_results.append(XG_Boosting_Regression_CV(train_df, test_df, t, 10, query_name))
+        # xg_results.append(XG_Boosting_Regression_CV(train_df, test_df, t, 10, query_name))
         xg_results.append(XG_Boosting_Regression(train_df, test_df, t, 10, query_name))
+
     print "Fitting Lasso CV"
     y_lasso = Lasso_Regression(train_df, test_df)
-    print "Fitting Linear Regression"
-    y_linear = linear_regression(train_df, test_df, query_name)
 
-    plot_df = plot_results(df, test_list,state_list)
+    plot_df = plot_results(df, test_list, state_list)
 
     for j,y in enumerate(xg_results):
         method = 'XG_' + str(trees_xg[j])
@@ -276,14 +290,10 @@ def ML_methods(df, state_list, query_name):
     for j,y in enumerate(rf_results):
         method = 'RF_' + str(trees[j])
         plot_df[method] = y
-    method = 'LM_pred'
-    plot_df[method] = y_linear
+
     method = 'Lasso'
     plot_df[method] = y_lasso
-    # Version includes: query + baseline + qmethod list
-    V = "Level3"
-    results_filename = write_pandas_to_csv(plot_df,V,out = True)
-    return results_filename
+
 
 def read_into_panda_from_csv(path):
 
@@ -654,9 +664,9 @@ def index(request):
         level0_file = create_initial_log(filename)
         # encode the file -- level 0 order file
         level0_file_ordered = order_csv_time(level0_file)
-        # encode the file -- level 1 and 2
-        level2_file = queue_level(level0_file_ordered)
-        # encode the file -- level 3
+        # # encode the file -- level 1 and 2
+        # level2_file = queue_level(level0_file_ordered)
+        # # encode the file -- level 3
         level3_file = multiclass(level0_file_ordered)
 
         #make the predictions
@@ -680,7 +690,5 @@ def index(request):
 @csrf_exempt
 def results(request):
     response_data = {}
-    response_data['result'] = 'error'
-    response_data['message'] = 'No request'
-    print 'here'
-    return HttpResponse(json.dumps(response_data), content_type="application/json")
+    df = read_from_query("result.csv")
+    return HttpResponse(df.to_json(), content_type="application/json")

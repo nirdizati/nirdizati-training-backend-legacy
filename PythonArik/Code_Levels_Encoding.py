@@ -589,7 +589,7 @@ def multiclass(path_query):
 
 def main(ML, qlength, Initial, Order, Multiclass):
     #path_orig = 'event_aggr_append_Arik.csv'
-    path_orig = 'encoded_production_data.csv'
+    path_orig = 'sample.csv'
     path_to_order = 'Query_Remaining_TimeV_events_0.csv'
     path_query = 'Query_Remaining_TimeV_events_0_ordered.csv'
     path_selected = 'Query_Remaining_TimeV_events_0_selected.csv'
