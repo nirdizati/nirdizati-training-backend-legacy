@@ -230,7 +230,7 @@ def plot_results(df, test_list,state_list):
 
 
     plot_df = df.ix[test_list]
-    cols = ['elapsed_time', 'total_time', 'remaining_time']
+    cols = ['id', 'elapsed_time', 'total_time', 'remaining_time']
     plot_df = plot_df[cols]
     return plot_df
 
