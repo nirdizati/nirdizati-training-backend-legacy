@@ -18,7 +18,7 @@ def index(request):
     results["message"] = "in logs"
     print 'creating data prep csv'
 
-    prep_data('Production.xes')
+    prep_data('logdata/'+request.GET['log'])
     return HttpResponse(json.dumps(results), content_type="application/json")
 
 def prep_data(filename):
@@ -26,7 +26,8 @@ def prep_data(filename):
 
     traces = obj.log.trace
 
-    header = ['id', 'startTime', 'event', 'resource', 'datetime', 'eventString', 'resourceString']
+    # header = ['id', 'startTime', 'event', 'resource', 'datetime', 'eventString', 'resourceString']
+    header = ['id', 'startTime', 'event', 'resource']
     data = []
 
     for trace in traces:
@@ -36,7 +37,8 @@ def prep_data(filename):
             date_time = event.date['value']
             start_time = time.mktime(datetime.datetime.strptime(date_time.split("+")[0], "%Y-%m-%dT%H:%M:%S.%f").timetuple())
             resource = event.string[4]['value']
-            data.append([case_id, start_time, activity_name, resource, date_time, activity_name, resource])
+            data.append([case_id, start_time, activity_name, resource])
+            # data.append([case_id, start_time, activity_name, resource, date_time, activity_name, resource])
 
     print 'done data preparation'
 
@@ -54,7 +56,7 @@ def prep_data(filename):
 
 def write_pandas_to_csv(df, filename):
     filename = 'prepdata.csv'
-    df.to_csv(filename,sep=',',mode='w')
+    df.to_csv(filename,sep=',',mode='w+', index=False)
     return filename
 
 def handle_uploaded_file(f):

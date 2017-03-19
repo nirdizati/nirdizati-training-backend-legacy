@@ -422,6 +422,7 @@ def write_pandas_to_csv(df, version, out):
 
 def create_initial_log(path):
     df = read_into_panda_from_csv(path)
+
     add_next_state(df)
     add_query_remaining(df)
     #df = clean_outliers(df)
@@ -680,8 +681,9 @@ def index(request):
     print request.method
     if request.method == 'POST':
         print >> sys.stderr, 'POST detected'
-        handle_uploaded_file(request.FILES['file'])
-        filename = request.FILES['file'].name
+        # handle_uploaded_file('prepdata.csv')
+        # filename = request.FILES['file'].name
+        filename = 'prepdata.csv'
 
         # encode the file -- level 0
         level0_file = create_initial_log(filename)
