@@ -7,4 +7,5 @@ urlpatterns = [
     url(r'^process', views.process_log, name='process'),
     url(r'^traces', views.traces, name='traces'),
     url(r'^resources', views.resources, name='resources'),
+    url(r'^events', views.event_executions, name='events'),
 ]

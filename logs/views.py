@@ -143,3 +143,29 @@ def count_active_traces(filename):
                 workload[date_time] = workload[date_time] + 1
 
     return workload
+
+@csrf_exempt
+def event_executions(request):
+    workload = count_event_executions('Production.xes')
+
+    return HttpResponse(json.dumps(workload), content_type="application/json")
+
+def count_event_executions(filename):
+    obj = untangle.parse(filename)
+
+    traces = obj.log.trace
+    executions = {}
+    events = []
+
+    for trace in traces:
+        for event in trace.event:
+            activity_name = event.string[0]['value']
+
+            if not activity_name in events:
+                events.append(activity_name)
+                executions[activity_name] = 1
+            else:
+                executions[activity_name] = executions[activity_name] + 1
+
+    return executions
+
