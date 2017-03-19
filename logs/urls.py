@@ -8,4 +8,5 @@ urlpatterns = [
     url(r'^traces', views.traces, name='traces'),
     url(r'^resources', views.resources, name='resources'),
     url(r'^events', views.event_executions, name='events'),
+    url(r'^list', views.list_log_files, name='list'),
 ]

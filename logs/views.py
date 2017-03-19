@@ -6,6 +6,10 @@ import pandas as pd
 import untangle
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from os import listdir
+from os.path import isfile, join
+
+import collections
 
 
 @csrf_exempt
@@ -81,7 +85,7 @@ def read_from_query(path):
 
 @csrf_exempt
 def resources(request):
-    workload = count_active_resources('Production.xes')
+    workload = count_active_resources('logdata/Production.xes')
     return HttpResponse(json.dumps(workload), content_type="application/json")
 
 def count_active_resources(filename):
@@ -112,12 +116,12 @@ def count_active_resources(filename):
         print value
         workload[key] = len(value)
 
+    workload = collections.OrderedDict(sorted(workload.items()))
     return workload
 
 @csrf_exempt
 def traces(request):
-    workload = count_active_traces('Production.xes')
-
+    workload = count_active_traces('logdata/Production.xes')
     return HttpResponse(json.dumps(workload), content_type="application/json")
 
 def count_active_traces(filename):
@@ -142,11 +146,12 @@ def count_active_traces(filename):
             else:
                 workload[date_time] = workload[date_time] + 1
 
+    workload = collections.OrderedDict(sorted(workload.items()))
     return workload
 
 @csrf_exempt
 def event_executions(request):
-    workload = count_event_executions('Production.xes')
+    workload = count_event_executions('logdata/Production.xes')
 
     return HttpResponse(json.dumps(workload), content_type="application/json")
 
@@ -167,5 +172,11 @@ def count_event_executions(filename):
             else:
                 executions[activity_name] = executions[activity_name] + 1
 
+    executions = collections.OrderedDict(sorted(executions.items()))
     return executions
 
+@csrf_exempt
+def list_log_files(request):
+    path = 'logdata'
+    onlyfiles = [f for f in listdir(path) if isfile(join(path, f))]
+    return HttpResponse(json.dumps(onlyfiles), content_type="application/json")
