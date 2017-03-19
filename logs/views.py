@@ -85,7 +85,7 @@ def read_from_query(path):
 
 @csrf_exempt
 def resources(request):
-    workload = count_active_resources('logdata/Production.xes')
+    workload = count_active_resources('logdata/'+request.GET['log'])
     return HttpResponse(json.dumps(workload), content_type="application/json")
 
 def count_active_resources(filename):
@@ -112,8 +112,6 @@ def count_active_resources(filename):
                 resources_per_day[date_time] = resources
 
     for key, value in resources_per_day.iteritems():
-        print key
-        print value
         workload[key] = len(value)
 
     workload = collections.OrderedDict(sorted(workload.items()))
@@ -121,7 +119,7 @@ def count_active_resources(filename):
 
 @csrf_exempt
 def traces(request):
-    workload = count_active_traces('logdata/Production.xes')
+    workload = count_active_traces('logdata/'+request.GET['log'])
     return HttpResponse(json.dumps(workload), content_type="application/json")
 
 def count_active_traces(filename):
@@ -151,7 +149,7 @@ def count_active_traces(filename):
 
 @csrf_exempt
 def event_executions(request):
-    workload = count_event_executions('logdata/Production.xes')
+    workload = count_event_executions('logdata/'+request.GET['log'])
 
     return HttpResponse(json.dumps(workload), content_type="application/json")
 
