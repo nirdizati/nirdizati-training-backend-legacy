@@ -9,4 +9,5 @@ urlpatterns = [
     url(r'^resources', views.resources, name='resources'),
     url(r'^events', views.event_executions, name='events'),
     url(r'^list', views.list_log_files, name='list'),
+    url(r'^upload', views.upload_file, name='upload'),
 ]

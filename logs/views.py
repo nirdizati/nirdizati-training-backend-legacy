@@ -61,7 +61,7 @@ def write_pandas_to_csv(df, filename):
 
 def handle_uploaded_file(f):
     print 'handle file upload'
-    with open('sample.csv', 'wb+') as destination:
+    with open('logdata/'+f.name, 'wb+') as destination:
         for chunk in f.chunks():
             destination.write(chunk)
 
@@ -180,3 +180,16 @@ def list_log_files(request):
     path = 'logdata'
     onlyfiles = [f for f in listdir(path) if isfile(join(path, f))]
     return HttpResponse(json.dumps(onlyfiles), content_type="application/json")
+
+@csrf_exempt
+def upload_file(request):
+    message = {}
+    if request.method == 'POST':
+        handle_uploaded_file(request.FILES['file'])
+        filename = request.FILES['file'].name
+        message['success'] = "true"
+        message['filename'] = filename
+        return HttpResponse(json.dumps(message), content_type="application/json")
+    else:
+        message['success'] = "false"
+        return HttpResponse(json.dumps(message), content_type="application/json")
