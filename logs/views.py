@@ -52,10 +52,10 @@ def prep_data(filename):
     unique_resource = pd.Series(df.resource).unique()
     df['resource'].replace(unique_resource, range(unique_resource.size), inplace=True)
 
-    write_pandas_to_csv(df, '')
+    write_pandas_to_csv(df, filename)
 
 def write_pandas_to_csv(df, filename):
-    filename = 'prepdata.csv'
+    filename = filename+'.csv'
     df.to_csv(filename,sep=',',mode='w+', index=False)
     return filename
 

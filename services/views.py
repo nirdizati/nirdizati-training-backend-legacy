@@ -683,7 +683,8 @@ def index(request):
         print >> sys.stderr, 'POST detected'
         # handle_uploaded_file('prepdata.csv')
         # filename = request.FILES['file'].name
-        filename = 'prepdata.csv'
+        filename = json.loads(request.body.decode('utf-8'))['name']
+        filename = 'logdata/'+filename+'.csv'
 
         # encode the file -- level 0
         level0_file = create_initial_log(filename)
