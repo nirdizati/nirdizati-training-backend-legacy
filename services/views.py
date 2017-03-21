@@ -22,6 +22,7 @@ import logging
 import sys
 
 import pdb
+import collections
 
 # Get an instance of a logger
 logger = logging.getLogger("testing")
@@ -718,3 +719,80 @@ def results(request):
     response_data = {}
     df = read_from_query("result.csv")
     return HttpResponse(df.to_json(), content_type="application/json")
+
+def root_mean_square_error_calculation(df, field1, field2):
+    return sqrt(mean_squared_error(df[field1], df[field2]))
+
+def mean_absolute_error_calculation(df, field1, field2):
+    return mean_absolute_error(df[field1], df[field2])
+
+@csrf_exempt
+def get_general_evaluation(request):
+    response_data = {}
+    df = read_from_query("result.csv")
+    results = {}
+    rmse = {}
+    rmse['Lasso'] = root_mean_square_error_calculation(df, 'remaining_time', 'Lasso')
+    rmse['LM_pred'] = root_mean_square_error_calculation(df, 'remaining_time', 'LM_pred')
+    rmse['RF_50'] = root_mean_square_error_calculation(df, 'remaining_time', 'RF_50')
+    rmse['XG_2000'] = root_mean_square_error_calculation(df, 'remaining_time', 'XG_2000')
+    results['RMSE'] = rmse
+
+    mae = {}
+    mae['Lasso'] = mean_absolute_error_calculation(df, 'remaining_time', 'Lasso')
+    mae['LM_pred'] = mean_absolute_error_calculation(df, 'remaining_time', 'LM_pred')
+    mae['RF_50'] = mean_absolute_error_calculation(df, 'remaining_time', 'RF_50')
+    mae['XG_2000'] = mean_absolute_error_calculation(df, 'remaining_time', 'XG_2000')
+    results['MAE'] = mae
+
+    return HttpResponse(json.dumps(results), content_type="application/json")
+
+@csrf_exempt
+def get_evaluation(request):
+    response_data = {}
+    df = read_from_query("result.csv")
+
+    df = df.sort('remaining_time', ascending=False)
+    df = df.reset_index(drop=True)
+
+
+    range = {}
+    range_list = {}
+    remaining_time = df['remaining_time']
+    divider = 20
+
+    range_difference = np.amax(remaining_time) / divider
+    x = 0
+    counter = 20
+    while x < 20:
+        counter -= 1
+        range_start = (counter+1)*range_difference -1
+        range_end = counter * range_difference
+        range_string = "%s - %s" %(range_start, range_end)
+        #filter data
+        range_data = df[df['remaining_time'] <= range_start ]
+        range_data = range_data[range_data['remaining_time'] >= range_end]
+
+        data = {}
+        rmse = {}
+        rmse['Lasso'] = root_mean_square_error_calculation(range_data, 'remaining_time', 'Lasso')
+        rmse['LM_pred'] = root_mean_square_error_calculation(range_data, 'remaining_time', 'LM_pred')
+        rmse['RF_50'] = root_mean_square_error_calculation(range_data, 'remaining_time', 'RF_50')
+        rmse['XG_2000'] = root_mean_square_error_calculation(range_data, 'remaining_time', 'XG_2000')
+        data['RMSE'] = rmse
+
+        mae = {}
+        mae['Lasso'] = mean_absolute_error_calculation(range_data, 'remaining_time', 'Lasso')
+        mae['LM_pred'] = mean_absolute_error_calculation(range_data, 'remaining_time', 'LM_pred')
+        mae['RF_50'] = mean_absolute_error_calculation(range_data, 'remaining_time', 'RF_50')
+        mae['XG_2000'] = mean_absolute_error_calculation(range_data, 'remaining_time', 'XG_2000')
+        data['MAE'] = mae
+
+        range[x] = data
+        range_list[x] = range_string
+        x += 1
+
+    results = {}
+    results['data'] = range
+    results['intervals'] = range_list
+    return HttpResponse(json.dumps(results), content_type="application/json")
