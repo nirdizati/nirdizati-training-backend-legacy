@@ -717,7 +717,12 @@ def index(request):
 @csrf_exempt
 def results(request):
     response_data = {}
-    df = read_from_query("result.csv")
+    df = read_from_query("Results/Level3.csv")
+    df['remaining_time'] = df['remaining_time']/3600
+    df['Lasso'] = df['Lasso'] / 3600
+    df['LM_pred'] = df['LM_pred'] / 3600
+    df['XG_2000'] = df['XG_2000'] / 3600
+    df['RF_50'] = df['RF_50'] / 3600
     return HttpResponse(df.to_json(), content_type="application/json")
 
 def root_mean_square_error_calculation(df, field1, field2):
@@ -729,7 +734,12 @@ def mean_absolute_error_calculation(df, field1, field2):
 @csrf_exempt
 def get_general_evaluation(request):
     response_data = {}
-    df = read_from_query("result.csv")
+    df = read_from_query("Results/Level3.csv")
+    df['remaining_time'] = df['remaining_time']/3600
+    df['Lasso'] = df['Lasso'] / 3600
+    df['LM_pred'] = df['LM_pred'] / 3600
+    df['XG_2000'] = df['XG_2000'] / 3600
+    df['RF_50'] = df['RF_50'] / 3600
     results = {}
     rmse = {}
     rmse['Lasso'] = root_mean_square_error_calculation(df, 'remaining_time', 'Lasso')
@@ -750,11 +760,17 @@ def get_general_evaluation(request):
 @csrf_exempt
 def get_evaluation(request):
     response_data = {}
-    df = read_from_query("result.csv")
+    df = read_from_query("Results/Level3.csv")
 
     df = df.sort('remaining_time', ascending=False)
     df = df.reset_index(drop=True)
 
+    #convert to hours
+    df['remaining_time'] = df['remaining_time']/3600
+    df['Lasso'] = df['Lasso'] / 3600
+    df['LM_pred'] = df['LM_pred'] / 3600
+    df['XG_2000'] = df['XG_2000'] / 3600
+    df['RF_50'] = df['RF_50'] / 3600
 
     range = {}
     range_list = {}
