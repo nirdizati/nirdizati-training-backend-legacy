@@ -179,6 +179,7 @@ def count_event_executions(filename):
 def list_log_files(request):
     path = 'logdata'
     onlyfiles = [f for f in listdir(path) if isfile(join(path, f))]
+    onlyfiles = filter(lambda x: x.endswith((".xes")), onlyfiles)
     return HttpResponse(json.dumps(onlyfiles), content_type="application/json")
 
 @csrf_exempt
