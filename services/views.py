@@ -264,8 +264,8 @@ def ML_methods(df, state_list, query_name, filename):
         xg_results.append(XG_Boosting_Regression(train_df, test_df, t, 10, query_name))
     print "Fitting Lasso CV"
     y_lasso = Lasso_Regression(train_df, test_df)
-    print "Fitting Linear Regression"
-    y_linear = linear_regression(train_df, test_df, query_name)
+    # print "Fitting Linear Regression"
+    # y_linear = linear_regression(train_df, test_df, query_name)
 
     plot_df = plot_results(df, test_list,state_list)
 
