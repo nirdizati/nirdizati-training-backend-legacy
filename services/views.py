@@ -421,22 +421,22 @@ def write_pandas_to_csv(df, version, out):
     return filename
 
 
-def create_initial_log(path):
+def create_initial_log(path, name):
     df = read_into_panda_from_csv(path)
 
     add_next_state(df)
     add_query_remaining(df)
     #df = clean_outliers(df)
     os.path.splitext(path)[0]
-    version = "_level_0"
+    version = "_level_0"+name
     filename = write_pandas_to_csv(df, version, False)
     return filename
 
-def order_csv_time(path):
+def order_csv_time(path, name):
     df = pio.read_csv(filepath_or_buffer=path, header=0, index_col=0)  # , nrows= 20)
     df = df.sort(['timestamp'], ascending=True)
     df = df.reset_index(drop=True)
-    version = "V_events_0_ordered"
+    version = "V_events_0_ordered"+name
     filename = write_pandas_to_csv(df, version, False)
     return filename
 
@@ -570,9 +570,6 @@ def add_mc_queues(df, pref_list):
                     else:
                         hist = str(parsed_hist[len(parsed_hist) - k - 1])+'_'+ hist
 
-
-
-
         ind = pref_list.index(hist)
         tuple = [cur_time, next_time]
         event_queue[ind].append(tuple)
@@ -586,13 +583,13 @@ def add_mc_queues(df, pref_list):
     return df
 
 
-def queue_level(path_query):
+def queue_level(path_query, name):
 
     df = read_from_query(path_query)
     df = df.reset_index(drop=True)
     state_list = get_states(df)
     df = add_queues(df, state_list)
-    version = "V_events_3"
+    version = "V_events_3"+name
     filename = write_pandas_to_csv(df, version, False)
     return filename
 
@@ -628,42 +625,14 @@ def get_prefixes(df):
 
     return pref_list
 
-
-
-def multiclass(path_query):
+def multiclass(path_query, name):
     df = read_from_query(path_query)
     df = df.reset_index(drop=True)
     pref_list = get_prefixes(df)
     df = add_mc_queues(df, pref_list)
-    version = "V_events_4"
+    version = "V_events_4"+name
     filename = write_pandas_to_csv(df, version, False)
     return filename
-
-def main(ML, qlength, Initial, Order, Multiclass):
-    #path_orig = 'event_aggr_append_Arik.csv'
-    path_orig = 'sample.csv'
-    path_to_order = 'Query_Remaining_TimeV_events_0.csv'
-    path_query = 'Query_Remaining_TimeV_events_0_ordered.csv'
-    path_selected = 'Query_Remaining_TimeV_events_0_selected.csv'
-    path_snapshot = 'Query_Remaining_TimeV_events_1_imputed.csv'
-    path_ML = 'Query_Remaining_TimeV_events_4.csv'
-
-    if Initial == True:
-        create_initial_log(path_orig)
-    if Order == True:
-        order_csv_time(path_to_order)
-
-    if qlength == True:
-        queue_level(path_query)
-    if Multiclass == True:
-        multiclass(path_query)
-    if ML == True:
-        query_name = 'remaining_time'
-        df = read_from_query(path_ML)
-        print df.head(20)
-        #state_list = get_states(df)
-        state_list = get_prefixes(df)
-        ML_methods(df, state_list, query_name)
 
 def handle_uploaded_file(f):
     print 'handle file upload'
@@ -689,13 +658,13 @@ def index(request):
         filename = 'logdata/'+filename+'.csv'
 
         # encode the file -- level 0
-        level0_file = create_initial_log(filename)
+        level0_file = create_initial_log(filename ,name)
         # encode the file -- level 0 order file
-        level0_file_ordered = order_csv_time(level0_file)
+        level0_file_ordered = order_csv_time(level0_file, name)
         # # encode the file -- level 1 and 2
-        # level2_file = queue_level(level0_file_ordered)
+        # level2_file = queue_level(level0_file_ordered, name)
         # # encode the file -- level 3
-        level3_file = multiclass(level0_file_ordered)
+        level3_file = multiclass(level0_file_ordered, name)
 
         #make the predictions
         query_name = 'remaining_time'
