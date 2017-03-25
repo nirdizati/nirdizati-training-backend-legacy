@@ -243,7 +243,7 @@ def plot_results(df, test_list,state_list):
     return plot_df
 
 
-def ML_methods(df, state_list, query_name):
+def ML_methods(df, state_list, query_name, filename):
     train_df, test_df, train_list, test_list = prep_data(df, state_list, query_name)
     print "Training shape is: " + str(train_df.shape)
 
@@ -275,12 +275,12 @@ def ML_methods(df, state_list, query_name):
     for j,y in enumerate(rf_results):
         method = 'RF_' + str(trees[j])
         plot_df[method] = y
-    method = 'LM_pred'
-    plot_df[method] = y_linear
+    # method = 'LM_pred'
+    # plot_df[method] = y_linear
     method = 'Lasso'
     plot_df[method] = y_lasso
     # Version includes: query + baseline + qmethod list
-    V = "Level3"
+    V = "Level3"+filename
     results_filename = write_pandas_to_csv(plot_df,V,out = True)
 
     return results_filename
@@ -513,7 +513,7 @@ def add_queues(df, state_list):
 
     num_rows = len(df)
     for i in range(0, num_rows):
-        print (str(i) + ' queueing calculation')
+        # print (str(i) + ' queueing calculation')
 
         cur_time = df.at[i, 'timestamp']
         next_time = df.at[i, 'next_time']
@@ -549,7 +549,7 @@ def add_mc_queues(df, pref_list):
 
     num_rows = len(df)
     for i in range(0, num_rows):
-        print (str(i) + ' queueing calculation')
+        # print (str(i) + ' queueing calculation')
         # cur_state = r.state.values[0]
         cur_time = df.at[i, 'timestamp']
         next_time = df.at[i, 'next_time']
@@ -685,6 +685,7 @@ def index(request):
         # handle_uploaded_file('prepdata.csv')
         # filename = request.FILES['file'].name
         filename = json.loads(request.body.decode('utf-8'))['name']
+        name = filename
         filename = 'logdata/'+filename+'.csv'
 
         # encode the file -- level 0
@@ -692,7 +693,7 @@ def index(request):
         # encode the file -- level 0 order file
         level0_file_ordered = order_csv_time(level0_file)
         # # encode the file -- level 1 and 2
-        level2_file = queue_level(level0_file_ordered)
+        # level2_file = queue_level(level0_file_ordered)
         # # encode the file -- level 3
         level3_file = multiclass(level0_file_ordered)
 
@@ -702,13 +703,11 @@ def index(request):
         print df.head(20)
         # state_list = get_states(df)
         state_list = get_prefixes(df)
-        results_filename = ML_methods(df, state_list, query_name)
+        results_filename = ML_methods(df, state_list, query_name, name)
 
         results = {}
         results["message"] = "results in " + results_filename
-
-        results["data"] = read_from_query(results_filename)
-
+        # results["data"] = read_from_query(results_filename)
         return HttpResponse(json.dumps(results), content_type="application/json")
     else:
         print 'here response'
@@ -717,10 +716,11 @@ def index(request):
 @csrf_exempt
 def results(request):
     response_data = {}
-    df = read_from_query("Results/Level3.csv")
+    filename = request.GET['file']
+    df = read_from_query("Results/"+filename)
     df['remaining_time'] = df['remaining_time']/3600
     df['Lasso'] = df['Lasso'] / 3600
-    df['LM_pred'] = df['LM_pred'] / 3600
+    # df['LM_pred'] = df['LM_pred'] / 3600
     df['XG_2000'] = df['XG_2000'] / 3600
     df['RF_50'] = df['RF_50'] / 3600
     return HttpResponse(df.to_json(), content_type="application/json")
@@ -734,23 +734,24 @@ def mean_absolute_error_calculation(df, field1, field2):
 @csrf_exempt
 def get_general_evaluation(request):
     response_data = {}
-    df = read_from_query("Results/Level3.csv")
+    filename = request.GET['file']
+    df = read_from_query("Results/"+filename)
     df['remaining_time'] = df['remaining_time']/3600
     df['Lasso'] = df['Lasso'] / 3600
-    df['LM_pred'] = df['LM_pred'] / 3600
+    # df['LM_pred'] = df['LM_pred'] / 3600
     df['XG_2000'] = df['XG_2000'] / 3600
     df['RF_50'] = df['RF_50'] / 3600
     results = {}
     rmse = {}
     rmse['Lasso'] = root_mean_square_error_calculation(df, 'remaining_time', 'Lasso')
-    rmse['LM_pred'] = root_mean_square_error_calculation(df, 'remaining_time', 'LM_pred')
+    # rmse['LM_pred'] = root_mean_square_error_calculation(df, 'remaining_time', 'LM_pred')
     rmse['RF_50'] = root_mean_square_error_calculation(df, 'remaining_time', 'RF_50')
     rmse['XG_2000'] = root_mean_square_error_calculation(df, 'remaining_time', 'XG_2000')
     results['RMSE'] = rmse
 
     mae = {}
     mae['Lasso'] = mean_absolute_error_calculation(df, 'remaining_time', 'Lasso')
-    mae['LM_pred'] = mean_absolute_error_calculation(df, 'remaining_time', 'LM_pred')
+    # mae['LM_pred'] = mean_absolute_error_calculation(df, 'remaining_time', 'LM_pred')
     mae['RF_50'] = mean_absolute_error_calculation(df, 'remaining_time', 'RF_50')
     mae['XG_2000'] = mean_absolute_error_calculation(df, 'remaining_time', 'XG_2000')
     results['MAE'] = mae
@@ -760,7 +761,8 @@ def get_general_evaluation(request):
 @csrf_exempt
 def get_evaluation(request):
     response_data = {}
-    df = read_from_query("Results/Level3.csv")
+    filename = request.GET['file']
+    df = read_from_query("Results/"+filename)
 
     df = df.sort('remaining_time', ascending=False)
     df = df.reset_index(drop=True)
@@ -768,7 +770,7 @@ def get_evaluation(request):
     #convert to hours
     df['remaining_time'] = df['remaining_time']/3600
     df['Lasso'] = df['Lasso'] / 3600
-    df['LM_pred'] = df['LM_pred'] / 3600
+    # df['LM_pred'] = df['LM_pred'] / 3600
     df['XG_2000'] = df['XG_2000'] / 3600
     df['RF_50'] = df['RF_50'] / 3600
 
@@ -791,15 +793,22 @@ def get_evaluation(request):
 
         data = {}
         rmse = {}
+
+        if len(range_data) == 0:
+            # range[x] = {}
+            # range_list[x] = range_string
+            x += 1
+            continue
+
         rmse['Lasso'] = root_mean_square_error_calculation(range_data, 'remaining_time', 'Lasso')
-        rmse['LM_pred'] = root_mean_square_error_calculation(range_data, 'remaining_time', 'LM_pred')
+        # rmse['LM_pred'] = root_mean_square_error_calculation(range_data, 'remaining_time', 'LM_pred')
         rmse['RF_50'] = root_mean_square_error_calculation(range_data, 'remaining_time', 'RF_50')
         rmse['XG_2000'] = root_mean_square_error_calculation(range_data, 'remaining_time', 'XG_2000')
         data['RMSE'] = rmse
 
         mae = {}
         mae['Lasso'] = mean_absolute_error_calculation(range_data, 'remaining_time', 'Lasso')
-        mae['LM_pred'] = mean_absolute_error_calculation(range_data, 'remaining_time', 'LM_pred')
+        # mae['LM_pred'] = mean_absolute_error_calculation(range_data, 'remaining_time', 'LM_pred')
         mae['RF_50'] = mean_absolute_error_calculation(range_data, 'remaining_time', 'RF_50')
         mae['XG_2000'] = mean_absolute_error_calculation(range_data, 'remaining_time', 'XG_2000')
         data['MAE'] = mae
