@@ -18,7 +18,8 @@ def index(request):
     results["message"] = "in logs"
     print 'creating data prep csv'
 
-    prep_data('logdata/'+request.GET['log'])
+    # prep_data('logdata/bpi2013_20.xes')
+    prep_data('logdata/' + request.GET['log'])
     return HttpResponse(json.dumps(results), content_type="application/json")
 
 def prep_data(filename):
@@ -31,12 +32,27 @@ def prep_data(filename):
     data = []
 
     for trace in traces:
-        case_id = trace.string[0]['value']
+        case_id = 'traceId'
+        if type(trace.string) is list :
+            for i in range(0, len(trace.string)):
+                if u"concept:name" == trace.string[i]['key']:
+                    case_id = trace.string[i]['value']
+        else:
+            #only has 1 value, so it automatically becomes the case id
+            case_id = trace.string['value']
+
         for event in trace.event:
-            activity_name = event.string[0]['value']
+            activity_name = 'eventName'
+            resource = 'resource'
+            for i in range(0, len(event.string)):
+                if u"concept:name" == event.string[i]['key']:
+                    activity_name = event.string[i]['value']
+                if u"Resource" == event.string[i]['key']:
+                    resource = event.string[i]['value']
+                elif u"org:resource" == event.string[i]['key']:
+                    resource = event.string[i]['value']
             date_time = event.date['value']
-            start_time = time.mktime(datetime.datetime.strptime(date_time.split("+")[0], "%Y-%m-%dT%H:%M:%S.%f").timetuple())
-            resource = event.string[4]['value']
+            start_time = time.mktime(datetime.datetime.strptime(date_time[0:19], "%Y-%m-%dT%H:%M:%S").timetuple())
             data.append([case_id, start_time, activity_name, resource])
             # data.append([case_id, start_time, activity_name, resource, date_time, activity_name, resource])
 
