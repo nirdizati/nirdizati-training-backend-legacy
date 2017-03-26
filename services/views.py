@@ -77,12 +77,11 @@ def history_encoding_new(df):
     return df, hist_len
 
 
-def prep_data(df, state_list, query_name):
+def prep_data(df, state_list, query_name, level):
 
     cols = ['resource']
 
     df, hist_len = history_encoding_new(df)
-
 
     for h in range(0,hist_len):
      cols.append('event_'+str(h))
@@ -95,12 +94,9 @@ def prep_data(df, state_list, query_name):
     dummies = pio.get_dummies(df_categorical)
     cols = ['elapsed_time',query_name]
 
-
-
-    for k,s in enumerate(state_list):
-       cols.append('pref'+'_'+str(k))
-
-
+    if level == 'Level 3':
+        for k,s in enumerate(state_list):
+           cols.append('pref'+'_'+str(k))
 
     df_numerical = df[cols]
     df_numerical = pio.concat([df_numerical, dummies], axis=1)
@@ -243,8 +239,8 @@ def plot_results(df, test_list,state_list):
     return plot_df
 
 
-def ML_methods(df, state_list, query_name, filename):
-    train_df, test_df, train_list, test_list = prep_data(df, state_list, query_name)
+def ML_methods(df, state_list, query_name, filename, level):
+    train_df, test_df, train_list, test_list = prep_data(df, state_list, query_name, level)
     print "Training shape is: " + str(train_df.shape)
 
     print "Fitting Random Forest"
@@ -280,44 +276,10 @@ def ML_methods(df, state_list, query_name, filename):
     method = 'Lasso'
     plot_df[method] = y_lasso
     # Version includes: query + baseline + qmethod list
-    V = "Level3"+filename
+    V = level+filename
     results_filename = write_pandas_to_csv(plot_df,V,out = True)
 
     return results_filename
-
-def prediction_methods(df, state_list, query_name):
-    train_df, test_df, train_list, test_list = prep_data(df, state_list, query_name)
-    print "Fitting Random Forest"
-    trees = [50]
-    # trees = []
-    rf_results = []
-    for t in trees:
-        print "Number of trees: " + str(t)
-        rf_results.append(random_Forest_regression(train_df, test_df, t, 2, query_name))
-
-    print "Fitting XGBOOST"
-    trees_xg = [2000]
-    xg_results = []
-    # used to be md = 100
-    for t in trees_xg:
-        print "Number of trees: " + str(t)
-        # xg_results.append(XG_Boosting_Regression_CV(train_df, test_df, t, 10, query_name))
-        xg_results.append(XG_Boosting_Regression(train_df, test_df, t, 10, query_name))
-
-    print "Fitting Lasso CV"
-    y_lasso = Lasso_Regression(train_df, test_df)
-
-    plot_df = plot_results(df, test_list, state_list)
-
-    for j,y in enumerate(xg_results):
-        method = 'XG_' + str(trees_xg[j])
-        plot_df[method] = y
-    for j,y in enumerate(rf_results):
-        method = 'RF_' + str(trees[j])
-        plot_df[method] = y
-
-    method = 'Lasso'
-    plot_df[method] = y_lasso
 
 
 def read_into_panda_from_csv(path):
@@ -650,10 +612,13 @@ def index(request):
 
     print request.method
     if request.method == 'POST':
+        req = json.loads(request.body)
+        level = req['level']
+        filename = req['name']
         print >> sys.stderr, 'POST detected'
         # handle_uploaded_file('prepdata.csv')
         # filename = request.FILES['file'].name
-        filename = json.loads(request.body.decode('utf-8'))['name']
+        # filename = json.loads(request.body.decode('utf-8'))['name']
         name = filename
         filename = 'logdata/'+filename+'.csv'
 
@@ -661,18 +626,26 @@ def index(request):
         level0_file = create_initial_log(filename ,name)
         # encode the file -- level 0 order file
         level0_file_ordered = order_csv_time(level0_file, name)
-        # # encode the file -- level 1 and 2
-        # level2_file = queue_level(level0_file_ordered, name)
-        # # encode the file -- level 3
-        level3_file = multiclass(level0_file_ordered, name)
 
         #make the predictions
+        df = {}
         query_name = 'remaining_time'
-        df = read_from_query(level3_file)
+        if level == 'Level3':
+            # # encode the file -- level 3
+            level3_file = multiclass(level0_file_ordered, name)
+            df = read_from_query(level3_file)
+        elif level == 'Level2' or level == 'Level1':
+            # # encode the file -- level 1 and 2
+            level1_2_file = queue_level(level0_file_ordered, name)
+            df = read_from_query(level1_2_file)
+        elif level == 'Level0':
+            df = read_from_query(level0_file_ordered)
+
         print df.head(20)
         # state_list = get_states(df)
         state_list = get_prefixes(df)
-        results_filename = ML_methods(df, state_list, query_name, name)
+
+        results_filename = ML_methods(df, state_list, query_name, name, level)
 
         results = {}
         results["message"] = "results in " + results_filename
