@@ -94,7 +94,7 @@ def prep_data(df, state_list, query_name, level):
     dummies = pio.get_dummies(df_categorical)
     cols = ['elapsed_time',query_name]
 
-    if level == 'Level 3':
+    if level == 'Level3':
         for k,s in enumerate(state_list):
            cols.append('pref'+'_'+str(k))
 
