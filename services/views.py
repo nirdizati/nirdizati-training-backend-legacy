@@ -97,6 +97,9 @@ def prep_data(df, state_list, query_name, level):
     if level == 'Level3':
         for k,s in enumerate(state_list):
            cols.append('pref'+'_'+str(k))
+    elif level == 'Level1':
+        for k,s in enumerate(state_list):
+           cols.append('queue'+'_'+str(k))
 
     df_numerical = df[cols]
     df_numerical = pio.concat([df_numerical, dummies], axis=1)
@@ -584,8 +587,6 @@ def get_prefixes(df):
                 ind = pref_list.index(hist)
             except ValueError:
                 pref_list.append(hist)
-
-
     return pref_list
 
 def multiclass(path_query, name):
@@ -630,21 +631,22 @@ def index(request):
 
         #make the predictions
         df = {}
+        state_list = {}
         query_name = 'remaining_time'
         if level == 'Level3':
             # # encode the file -- level 3
             level3_file = multiclass(level0_file_ordered, name)
             df = read_from_query(level3_file)
+            state_list = get_prefixes(df)
         elif level == 'Level2' or level == 'Level1':
             # # encode the file -- level 1 and 2
             level1_2_file = queue_level(level0_file_ordered, name)
             df = read_from_query(level1_2_file)
+            state_list = get_states(df)
         elif level == 'Level0':
             df = read_from_query(level0_file_ordered)
 
         print df.head(20)
-        # state_list = get_states(df)
-        state_list = get_prefixes(df)
 
         results_filename = ML_methods(df, state_list, query_name, name, level)
 
