@@ -117,7 +117,12 @@ def count_active_resources(filename):
     for trace in traces:
         for event in trace.event:
             resources = []
-            resource = event.string[4]['value']
+            resource = 'resource'
+            for i in range(0, len(event.string)):
+                if u"Resource" == event.string[i]['key']:
+                    resource = event.string[i]['value']
+                elif u"org:resource" == event.string[i]['key']:
+                    resource = event.string[i]['value']
             date_time = event.date['value'].split("T")[0]
             resources.append(resource)
             if date_time in dates:
