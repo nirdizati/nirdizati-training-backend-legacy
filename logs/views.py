@@ -51,7 +51,13 @@ def prep_data(filename):
                     resource = event.string[i]['value']
                 elif u"org:resource" == event.string[i]['key']:
                     resource = event.string[i]['value']
-            date_time = event.date['value']
+            date_time = ''
+            if type(event.date) is list:
+                for i in range(0, len(event.date)):
+                    if u"time:timestamp" == event.date[i]['key']:
+                        date_time = event.date[i]['value']
+            else:
+                date_time = event.date['value']
             start_time = time.mktime(datetime.datetime.strptime(date_time[0:19], "%Y-%m-%dT%H:%M:%S").timetuple())
             data.append([case_id, start_time, activity_name, resource])
             # data.append([case_id, start_time, activity_name, resource, date_time, activity_name, resource])
