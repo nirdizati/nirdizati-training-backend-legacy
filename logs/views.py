@@ -129,7 +129,14 @@ def count_active_resources(filename):
                     resource = event.string[i]['value']
                 elif u"org:resource" == event.string[i]['key']:
                     resource = event.string[i]['value']
-            date_time = event.date['value'].split("T")[0]
+            date_time = ''
+            if type(event.date) is list:
+                for i in range(0, len(event.date)):
+                    if u"time:timestamp" == event.date[i]['key']:
+                        date_time = event.date[i]['value']
+            else:
+                date_time = event.date['value']
+            date_time = date_time.split("T")[0]
             resources.append(resource)
             if date_time in dates:
                 current_resources = resources_per_day[date_time]
@@ -161,7 +168,14 @@ def count_active_traces(filename):
     for trace in traces:
         active_dates = []
         for event in trace.event:
-            date_time = event.date['value'].split("T")[0]
+            date_time = ''
+            if type(event.date) is list:
+                for i in range(0, len(event.date)):
+                    if u"time:timestamp" == event.date[i]['key']:
+                        date_time = event.date[i]['value']
+            else:
+                date_time = event.date['value']
+            date_time = date_time.split("T")[0]
             if not date_time in active_dates:
                 active_dates.append(date_time)
             else:
