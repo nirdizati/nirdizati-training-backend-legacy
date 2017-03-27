@@ -205,8 +205,10 @@ def count_event_executions(filename):
 
     for trace in traces:
         for event in trace.event:
-            activity_name = event.string[0]['value']
-
+            activity_name = 'eventName'
+            for i in range(0, len(event.string)):
+                if u"concept:name" == event.string[i]['key']:
+                    activity_name = event.string[i]['value']
             if not activity_name in events:
                 events.append(activity_name)
                 executions[activity_name] = 1
