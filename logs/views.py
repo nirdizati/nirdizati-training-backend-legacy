@@ -109,11 +109,15 @@ def read_from_query(path):
 
 @csrf_exempt
 def resources(request):
-    workload = count_active_resources('logdata/'+request.GET['log'])
+    workload = count_active_resources(request.GET['log'])
     return HttpResponse(json.dumps(workload), content_type="application/json")
 
 def count_active_resources(filename):
-    obj = untangle.parse(filename)
+    expectedFile = "data/" + filename + "resource.txt"
+    data = read_file(expectedFile)
+    if data != None:
+        return data
+    obj = untangle.parse('logdata/' + filename)
 
     traces = obj.log.trace
     resources_per_day = {}
@@ -151,15 +155,22 @@ def count_active_resources(filename):
         workload[key] = len(value)
 
     workload = collections.OrderedDict(sorted(workload.items()))
+    with open(expectedFile, 'w+') as outfile:
+        json.dump(workload, outfile)
     return workload
 
 @csrf_exempt
 def traces(request):
-    workload = count_active_traces('logdata/'+request.GET['log'])
+    workload = count_active_traces(request.GET['log'])
     return HttpResponse(json.dumps(workload), content_type="application/json")
 
 def count_active_traces(filename):
-    obj = untangle.parse(filename)
+    expectedFile = "data/" + filename + "workload.txt"
+    data = read_file(expectedFile)
+    if data != None:
+        print data
+        return data
+    obj = untangle.parse('logdata/' + filename)
 
     traces = obj.log.trace
     workload = {}
@@ -188,16 +199,23 @@ def count_active_traces(filename):
                 workload[date_time] = workload[date_time] + 1
 
     workload = collections.OrderedDict(sorted(workload.items()))
+    with open(expectedFile, 'w+') as outfile:
+        json.dump(workload, outfile)
     return workload
 
 @csrf_exempt
 def event_executions(request):
-    workload = count_event_executions('logdata/'+request.GET['log'])
+    filename = request.GET['log'];
+    workload = count_event_executions(filename)
 
     return HttpResponse(json.dumps(workload), content_type="application/json")
 
 def count_event_executions(filename):
-    obj = untangle.parse(filename)
+    expectedFile = "data/" + filename + "eventexecutions.txt"
+    data = read_file(expectedFile)
+    if data != None:
+        return data
+    obj = untangle.parse('logdata/'+filename)
 
     traces = obj.log.trace
     executions = {}
@@ -215,8 +233,19 @@ def count_event_executions(filename):
             else:
                 executions[activity_name] = executions[activity_name] + 1
 
-    executions = collections.OrderedDict(sorted(executions.items()))
+    executions = collections.OrderedDict(sorted(executions.items(), reverse=True, key=executions.get))
+    with open(expectedFile, 'w+') as outfile:
+        json.dump(executions, outfile)
     return executions
+
+def read_file(filename):
+    file_data = None
+    if isfile(filename):
+        file = open(filename)
+        file_data = json.loads(file.read())
+        file_data = collections.OrderedDict(sorted(file_data.items()))
+
+    return file_data
 
 @csrf_exempt
 def list_log_files(request):
