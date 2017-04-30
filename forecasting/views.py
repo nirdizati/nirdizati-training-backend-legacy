@@ -126,5 +126,3 @@ def read_file(filename):
         file_data = collections.OrderedDict(sorted(file_data.items()))
 
     return file_data
-
-
