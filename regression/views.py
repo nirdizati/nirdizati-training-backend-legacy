@@ -131,8 +131,99 @@ def to_return_data(data):
 
     return new_data
 
-def evaluation(request):
-    return HttpResponse()
+def lineargeneral(request):
+    filename = request.GET['log']
+    expectedFile = "Results/linearregression"+filename+'.csv'
+    results = general(expectedFile)
+    return HttpResponse(json.dumps(results), content_type="application/json")
 
-def general(request):
-    return HttpResponse()
+def randomforestregressiongeneral(request):
+    filename = request.GET['log']
+    expectedFile = "Results/randomforestregression"+filename+'.csv'
+    results = general(expectedFile)
+    return HttpResponse(json.dumps(results), content_type="application/json")
+
+def xgboostgeneral(request):
+    filename = request.GET['log']
+    expectedFile = "Results/xgboostregression"+filename+'.csv'
+    results = general(expectedFile)
+    return HttpResponse(json.dumps(results), content_type="application/json")
+
+def general(expectedFile):
+    results = {}
+    if isfile(expectedFile):
+        data = pd.read_csv(expectedFile)
+        data['remainingTime'] = data['remainingTime']/3600
+        data['prediction'] = data['prediction'] / 3600
+
+        results['RMSE'] = root_mean_square_error_calculation(data, 'remainingTime', 'prediction')
+        results['MAE'] = mean_absolute_error_calculation(data, 'remainingTime', 'prediction')
+    return results
+
+def linearevaluation(request):
+    filename = request.GET['log']
+    expectedFile = "Results/linearregression"+filename+'.csv'
+    results = evaluation(expectedFile)
+    print results
+    return HttpResponse(json.dumps(results), content_type="application/json")
+
+def randomforestregressionevaluation(request):
+    filename = request.GET['log']
+    expectedFile = "Results/randomforestregression"+filename+'.csv'
+    results = evaluation(expectedFile)
+    return HttpResponse(json.dumps(results), content_type="application/json")
+
+def xgboostevaluation(request):
+    filename = request.GET['log']
+    expectedFile = "Results/xgboostregression"+filename+'.csv'
+    results = evaluation(expectedFile)
+    return HttpResponse(json.dumps(results), content_type="application/json")
+
+def evaluation(expectedFile):
+    data = pd.read_csv(expectedFile)
+    if not data.empty:
+        data['remainingTime'] = data['remainingTime']/3600
+        data['prediction'] = data['prediction'] / 3600
+
+        data = data[data.remainingTime != data.prediction]
+
+        range = {}
+        range_list = {}
+        remaining_time = data['remainingTime']
+        divider = 20
+
+        range_difference = np.amax(remaining_time) / divider
+        x = 0
+        counter = 20
+        while x < 20:
+            counter -= 1
+            range_start = (counter+1)*range_difference -1
+            range_end = counter * range_difference
+            range_string = "%s - %s" %(range_start, range_end)
+            #filter data
+            range_data = data[data['remainingTime'] <= range_start ]
+            range_data = range_data[range_data['remainingTime'] >= range_end]
+
+            if len(range_data) == 0:
+                x += 1
+                continue
+
+            results = {}
+            results['RMSE'] = root_mean_square_error_calculation(range_data, 'remainingTime', 'prediction')
+            results['MAE'] = mean_absolute_error_calculation(range_data, 'remainingTime', 'prediction')
+
+            range[x] = results
+            range_list[x] = range_string
+            x += 1
+        results = {}
+        results['data'] = range
+        results['intervals'] = range_list
+        return results
+    return {}
+
+
+def root_mean_square_error_calculation(df, field1, field2):
+    return sqrt(mean_squared_error(df[field1], df[field2]))
+
+def mean_absolute_error_calculation(df, field1, field2):
+    return mean_absolute_error(df[field1], df[field2])
