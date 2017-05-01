@@ -20,5 +20,6 @@ urlpatterns = [
 	url(r'^services/', include('services.urls')),
     url(r'^logs/', include('logs.urls')),
     url(r'^forecasting/', include('forecasting.urls')),
+    url(r'^regression/', include('regression.urls')),
     url(r'^admin/', admin.site.urls),
 ]

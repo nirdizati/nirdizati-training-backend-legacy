@@ -85,7 +85,6 @@ def resources(request):
     rmse["ARMA"] = forecast1.compute_rmse()
     result["RMSE"] = rmse
 
-
     with open(expectedFileRMSE, 'w+') as outfile:
         json.dump(result, outfile)
 
@@ -132,8 +131,8 @@ def forecast_remaining_time(request):
     filename = request.GET['log']
 
     expectedFile = "Results/forecasting_"+filename+'.csv'
-    data = pd.read_csv(expectedFile)
-    if not data.empty:
+    if isfile(expectedFile):
+        data = pd.read_csv(expectedFile)
         data['remainingTime'] = data['remainingTime']/3600
         data['prediction'] = data['prediction'] / 3600
 
@@ -217,8 +216,6 @@ def forecast_remaining_time_evaluation(request):
             range_data = range_data[range_data['remainingTime'] >= range_end]
 
             if len(range_data) == 0:
-                # range[x] = {}
-                # range_list[x] = range_string
                 x += 1
                 continue
 

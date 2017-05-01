@@ -145,10 +145,6 @@ def random_Forest_regression(train_df, test_df, n_est, sample_leaf, query_name):
     print 'Random Forest MAE = ' + str(round(mae / 60, 2))
     return y_pred
 
-
-
-
-
 def XG_Boosting_Regression(train_df, test_df, n_est, md, query_name):
     X_train = train_df.ix[:, train_df.columns != query_name]
     X_test = test_df.ix[:, test_df.columns != query_name]
