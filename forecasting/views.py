@@ -130,7 +130,7 @@ def forecast_remaining_time(request):
 
     df = pd.read_csv(filepath_or_buffer="encodedfiles/indexbased_"+filename+'.csv', header=0)
 
-    df['prediction'] = 0
+    df['prediction'] = df['remainingTime']
     traces = df['id'].unique()
     starting_index = 5
 
