@@ -1,28 +1,20 @@
 import json
-from django.http import HttpResponse
-
-
+import logging
 import os
-import xgboost as xgb
+import sys
+from datetime import datetime as d_time
+from math import sqrt
+
 import numpy as np
 import pandas as pio
-from operator import attrgetter
-from collections import namedtuple
+import xgboost as xgb
+from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
 from sklearn.cross_validation import train_test_split
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import LassoCV
 from sklearn.linear_model import LinearRegression
-from sklearn.linear_model import Lasso, LassoCV, LassoLarsCV
 from sklearn.metrics import mean_squared_error, mean_absolute_error
-from math import sqrt
-from datetime import datetime as d_time
-from sklearn.preprocessing import Imputer
-from django.views.decorators.csrf import csrf_exempt
-from .forms import UploadFileForm
-import logging
-import sys
-
-import pdb
-import collections
 
 # Get an instance of a logger
 logger = logging.getLogger("testing")
