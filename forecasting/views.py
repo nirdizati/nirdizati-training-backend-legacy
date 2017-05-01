@@ -132,20 +132,25 @@ def forecast_remaining_time(request):
 
     df['prediction'] = 0
     traces = df['id'].unique()
+    starting_index = 5
 
     for trace in traces:
         trace_remaining_time = df.remainingTime[df['id'] == trace]
-
+        index_values = trace_remaining_time.index.tolist()
         trace_remaining_time_reset = trace_remaining_time.reset_index(drop=True)
-        if len(trace_remaining_time_reset) < 5:
+        if len(trace_remaining_time_reset) < starting_index:
             continue
 
-        forecast1 = UnivariateForecasting(trace_remaining_time_reset, len(trace_remaining_time_reset) - 5, 5)
+        forecast1 = UnivariateForecasting(trace_remaining_time_reset, len(trace_remaining_time_reset) - starting_index, starting_index)
         res = forecast1.compute_arma()
 
+        i = 0
         for result in res:
-            df['prediction'].name = result
+            df['prediction'][index_values[i+starting_index]] = result
+            i += 1
 
+    df = df.drop('history', 1)
+    df = df.drop('elapsedTime', 1)
     write_pandas_to_csv(df, filename+'.csv')
 
     return HttpResponse(df.to_json(), content_type="text/plain")
