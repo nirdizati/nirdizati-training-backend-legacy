@@ -1,15 +1,13 @@
-from django.shortcuts import render
+import collections
+import json
+from os.path import isfile
+
+import numpy as np
 from django.http import HttpResponse
 
 from univariate_forecasting import UnivariateForecasting
+import pandas as pd
 
-import json
-import collections
-
-
-import numpy as np
-from os import listdir
-from os.path import isfile, join
 
 def index(request):
     return HttpResponse()
@@ -126,3 +124,33 @@ def read_file(filename):
         file_data = collections.OrderedDict(sorted(file_data.items()))
 
     return file_data
+
+def forecast_remaining_time(request):
+    filename = request.GET['log']
+
+    df = pd.read_csv(filepath_or_buffer="encodedfiles/indexbased_"+filename+'.csv', header=0)
+
+    df['prediction'] = 0
+    traces = df['id'].unique()
+
+    for trace in traces:
+        trace_remaining_time = df.remainingTime[df['id'] == trace]
+
+        trace_remaining_time_reset = trace_remaining_time.reset_index(drop=True)
+        if len(trace_remaining_time_reset) < 5:
+            continue
+
+        forecast1 = UnivariateForecasting(trace_remaining_time_reset, len(trace_remaining_time_reset) - 5, 5)
+        res = forecast1.compute_arma()
+
+        for result in res:
+            df['prediction'].name = result
+
+    write_pandas_to_csv(df, filename+'.csv')
+
+    return HttpResponse(df.to_json(), content_type="text/plain")
+    # return HttpResponse(json.dumps(df), content_type="application/json")
+
+def write_pandas_to_csv(df, filename):
+    df.to_csv("Results/forecasting_"+filename,sep=',',mode='w+', index=False)
+    return filename

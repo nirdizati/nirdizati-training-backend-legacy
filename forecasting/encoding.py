@@ -44,7 +44,6 @@ def remaining_time_encode(request):
 
             data.append([case_id, last_event_timestamp - event_timestamp, event_timestamp - first_event_timestamp, activity_name.rstrip('_')])
 
-    # data = {'a':'b'}
     df = pd.DataFrame(columns=header, data=data)
     write_pandas_to_csv(df, filename+'.csv')
     return HttpResponse(json.dumps(data), content_type="application/json")

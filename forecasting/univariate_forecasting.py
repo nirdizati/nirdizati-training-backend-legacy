@@ -17,6 +17,8 @@ class UnivariateForecasting:
         self.predictions = np.zeros(self.steps)
         self.errors = np.zeros(self.steps)
         self.rmse = 0
+        self.p = 1
+        self.q = 0
 
 
     def compute_rmse(self):
@@ -33,13 +35,11 @@ class UnivariateForecasting:
             print "step: " + str(i)
             train_data = self.train[0:self.start+i]
 
-            print train_data
-            print train_data.dtype
-
-            res = sm.tsa.ARMA(train_data, order=(2, 0)).fit()
+            res = sm.tsa.ARMA(train_data, order=(self.p, self.q)).fit()
 
             forecast = res.forecast(1)
             self.predictions[i] = forecast[0]
+
             self.errors[i] = forecast[0] - self.train[i+self.start]
             rel[i] = (forecast[0] - self.train[i+self.start]) / self.train[i+self.start]
 
@@ -78,14 +78,3 @@ class UnivariateForecasting:
         for i in range(len(nums)):
             ms += math.fabs(nums[i])
         return ms / len(nums)
-
-# forecast1 = UnivariateForecasting("productionDataTest_arma_15.csv", 1, 13)
-# res1 = forecast1.compute_arma_all()
-
-# forecast1 = UnivariateForecasting("cluster0/bpi2017_lt_50.csv", 20)
-# res1 = forecast1.compute_arma()
-
-# print "printing the final rmse results for univariate predictions"
-#
-# print res1
-
