@@ -1,20 +1,18 @@
-import collections
+import cPickle
 import json
+from math import sqrt
 from os.path import isfile
 
 import numpy as np
+import pandas as pd
+import xgboost as xgb
 from django.http import HttpResponse
 from django.http import HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
-from sklearn.linear_model import LinearRegression
-from sklearn.cross_validation import train_test_split
 from sklearn.ensemble import RandomForestRegressor
-import xgboost as xgb
-
-import pandas as pd
-
-from math import sqrt
+from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, mean_absolute_error
+
 
 def index(request):
     return HttpResponse()
@@ -41,11 +39,17 @@ def linear(request):
     if request.method == 'POST':
         req = json.loads(request.body)
         filename = req['log']
+        expected_filename = "Results/linearregression"+filename+'.csv'
+        data = results(expected_filename)
+        if data is not None:
+            return HttpResponse(data.to_json(), content_type="application/json")
         train_data, test_data, original_test_data = prep_data(filename)
         lm = LinearRegression(fit_intercept=True)
         y = train_data['remainingTime']
         train_data = train_data.drop('remainingTime', 1)
         lm.fit(train_data, y)
+        with open('predictionmodels/time/linearregression_'+filename+'.pkl', 'wb') as fid:
+            cPickle.dump(lm, fid)
 
         original_test_data['prediction'] = lm.predict(test_data)
 
@@ -68,11 +72,17 @@ def randomforestregression(request):
     if request.method == 'POST':
         req = json.loads(request.body)
         filename = req['log']
+        expected_filename = "Results/randomforestregression"+filename+'.csv'
+        data = results(expected_filename)
+        if data is not None:
+            return HttpResponse(data.to_json(), content_type="application/json")
         train_data, test_data, original_test_data = prep_data(filename)
         rf = RandomForestRegressor(n_estimators=50, n_jobs=8, verbose=1)
         y = train_data['remainingTime']
         train_data = train_data.drop('remainingTime', 1)
         rf.fit(train_data, y)
+        with open('predictionmodels/time/randomforestregression'+filename+'.pkl', 'wb') as fid:
+            cPickle.dump(rf, fid)
 
         original_test_data['prediction'] = rf.predict(test_data)
 
@@ -95,11 +105,17 @@ def xgboost(request):
     if request.method == 'POST':
         req = json.loads(request.body)
         filename = req['log']
+        expected_filename = "Results/xgboostregression"+filename+'.csv'
+        data = results(expected_filename)
+        if data is not None:
+            return HttpResponse(data.to_json(), content_type="application/json")
         train_data, test_data, original_test_data = prep_data(filename)
         clf = xgb.XGBRegressor(n_estimators=2000, max_depth=10)
         y = train_data['remainingTime']
         train_data = train_data.drop('remainingTime', 1)
         clf.fit(train_data, y)
+        with open('predictionmodels/time/xgboost'+filename+'.pkl', 'wb') as fid:
+            cPickle.dump(clf, fid)
 
         original_test_data['prediction'] = clf.predict(test_data)
 
