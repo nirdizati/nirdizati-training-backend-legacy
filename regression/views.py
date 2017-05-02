@@ -5,6 +5,7 @@ from os.path import isfile
 import numpy as np
 from django.http import HttpResponse
 from django.http import HttpResponseBadRequest
+from django.views.decorators.csrf import csrf_exempt
 from sklearn.linear_model import LinearRegression
 from sklearn.cross_validation import train_test_split
 from sklearn.ensemble import RandomForestRegressor
@@ -35,82 +36,90 @@ def split_data(data):
     test_data = data[np.invert(ids)]
     return train_data, test_data
 
+@csrf_exempt
 def linear(request):
-    filename = request.GET['log']
-    expected_filename = "Results/linearregression"+filename+'.csv'
-    if isfile(expected_filename):
-        data = pd.read_csv(expected_filename)
-        data['remainingTime'] = data['remainingTime']/3600
-        data['prediction'] = data['prediction'] / 3600
-        data = to_return_data(data)
-        return HttpResponse(data.to_json(), content_type="application/json")
+    if request.method == 'POST':
+        req = json.loads(request.body)
+        filename = req['log']
+        train_data, test_data, original_test_data = prep_data(filename)
+        lm = LinearRegression(fit_intercept=True)
+        y = train_data['remainingTime']
+        train_data = train_data.drop('remainingTime', 1)
+        lm.fit(train_data, y)
 
-    train_data, test_data, original_test_data = prep_data(request)
-    lm = LinearRegression(fit_intercept=True)
-    y = train_data['remainingTime']
-    train_data = train_data.drop('remainingTime', 1)
-    lm.fit(train_data, y)
+        original_test_data['prediction'] = lm.predict(test_data)
 
-    original_test_data['prediction'] = lm.predict(test_data)
+        original_test_data.to_csv("Results/linearregression" + filename + '.csv', sep=',', mode='w+', index=False)
+        original_test_data['remainingTime'] = original_test_data['remainingTime'] / 3600
+        original_test_data['prediction'] = original_test_data['prediction'] / 3600
+        original_test_data = to_return_data(original_test_data)
+        return HttpResponse(original_test_data.to_json(), content_type="application/json")
+    else:
+        filename = request.GET['log']
+        expected_filename = "Results/linearregression"+filename+'.csv'
+        data = results(expected_filename)
+        if data is not None:
+            return HttpResponse(data.to_json(), content_type="application/json")
+        else:
+            return HttpResponseBadRequest()
 
-    original_test_data.to_csv("Results/linearregression"+filename+'.csv',sep=',',mode='w+', index=False)
-    original_test_data['remainingTime'] = original_test_data['remainingTime'] / 3600
-    original_test_data['prediction'] = original_test_data['prediction'] / 3600
-    original_test_data = to_return_data(original_test_data)
-    return HttpResponse(original_test_data.to_json(), content_type="application/json")
-
+@csrf_exempt
 def randomforestregression(request):
-    filename = request.GET['log']
-    expected_filename = "Results/randomforestregression"+filename+'.csv'
-    if isfile(expected_filename):
-        data = pd.read_csv(expected_filename)
-        data['remainingTime'] = data['remainingTime']/3600
-        data['prediction'] = data['prediction'] / 3600
-        data = to_return_data(data)
-        return HttpResponse(data.to_json(), content_type="application/json")
+    if request.method == 'POST':
+        req = json.loads(request.body)
+        filename = req['log']
+        train_data, test_data, original_test_data = prep_data(filename)
+        rf = RandomForestRegressor(n_estimators=50, n_jobs=8, verbose=1)
+        y = train_data['remainingTime']
+        train_data = train_data.drop('remainingTime', 1)
+        rf.fit(train_data, y)
 
-    train_data, test_data, original_test_data = prep_data(request)
-    rf = RandomForestRegressor(n_estimators=50, n_jobs=8, verbose=1)
-    y = train_data['remainingTime']
-    train_data = train_data.drop('remainingTime', 1)
-    rf.fit(train_data, y)
+        original_test_data['prediction'] = rf.predict(test_data)
 
-    original_test_data['prediction'] = rf.predict(test_data)
+        original_test_data.to_csv("Results/randomforestregression"+filename+'.csv',sep=',',mode='w+', index=False)
+        original_test_data['remainingTime'] = original_test_data['remainingTime'] / 3600
+        original_test_data['prediction'] = original_test_data['prediction'] / 3600
+        original_test_data = to_return_data(original_test_data)
+        return HttpResponse(original_test_data.to_json(), content_type="application/json")
+    else:
+        filename = request.GET['log']
+        expected_filename = "Results/randomforestregression"+filename+'.csv'
+        data = results(expected_filename)
+        if data is not None:
+            return HttpResponse(data.to_json(), content_type="application/json")
+        else:
+            return HttpResponseBadRequest()
 
-    original_test_data.to_csv("Results/randomforestregression"+filename+'.csv',sep=',',mode='w+', index=False)
-    original_test_data['remainingTime'] = original_test_data['remainingTime'] / 3600
-    original_test_data['prediction'] = original_test_data['prediction'] / 3600
-    original_test_data = to_return_data(original_test_data)
-    return HttpResponse(original_test_data.to_json(), content_type="application/json")
-
+@csrf_exempt
 def xgboost(request):
-    filename = request.GET['log']
-    expected_filename = "Results/xgboostregression"+filename+'.csv'
-    if isfile(expected_filename):
-        data = pd.read_csv(expected_filename)
-        data['remainingTime'] = data['remainingTime']/3600
-        data['prediction'] = data['prediction'] / 3600
-        data = to_return_data(data)
-        return HttpResponse(data.to_json(), content_type="application/json")
+    if request.method == 'POST':
+        req = json.loads(request.body)
+        filename = req['log']
+        train_data, test_data, original_test_data = prep_data(filename)
+        clf = xgb.XGBRegressor(n_estimators=2000, max_depth=10)
+        y = train_data['remainingTime']
+        train_data = train_data.drop('remainingTime', 1)
+        clf.fit(train_data, y)
 
-    train_data, test_data, original_test_data = prep_data(request)
-    clf = xgb.XGBRegressor(n_estimators=2000, max_depth=10)
-    y = train_data['remainingTime']
-    train_data = train_data.drop('remainingTime', 1)
-    clf.fit(train_data, y)
+        original_test_data['prediction'] = clf.predict(test_data)
 
-    original_test_data['prediction'] = clf.predict(test_data)
+        original_test_data.to_csv("Results/xgboostregression"+filename+'.csv', sep=',', mode='w+', index=False)
 
-    original_test_data.to_csv(expected_filename,sep=',',mode='w+', index=False)
+        original_test_data['remainingTime'] = original_test_data['remainingTime'] / 3600
+        original_test_data['prediction'] = original_test_data['prediction'] / 3600
 
-    original_test_data['remainingTime'] = original_test_data['remainingTime'] / 3600
-    original_test_data['prediction'] = original_test_data['prediction'] / 3600
+        original_test_data = to_return_data(original_test_data)
+        return HttpResponse(original_test_data.to_json(), content_type="application/json")
+    else:
+        filename = request.GET['log']
+        expected_filename = "Results/xgboostregression"+filename+'.csv'
+        data = results(expected_filename)
+        if data is not None:
+            return HttpResponse(data.to_json(), content_type="application/json")
+        else:
+            return HttpResponseBadRequest()
 
-    original_test_data = to_return_data(original_test_data)
-    return HttpResponse(original_test_data.to_json(), content_type="application/json")
-
-def prep_data(request):
-    filename = request.GET['log']
+def prep_data(filename):
     df = pd.read_csv(filepath_or_buffer="encodedfiles/indexbased_" + filename + '.csv', header=0)
 
     train_data, test_data = split_data(df)
@@ -130,6 +139,15 @@ def to_return_data(data):
     new_data['prediction'] = data['prediction']
 
     return new_data
+
+def results(expected_filename):
+    if isfile(expected_filename):
+        data = pd.read_csv(expected_filename)
+        data['remainingTime'] = data['remainingTime']/3600
+        data['prediction'] = data['prediction'] / 3600
+        data = to_return_data(data)
+        return data
+    return None
 
 def lineargeneral(request):
     filename = request.GET['log']
@@ -164,7 +182,6 @@ def linearevaluation(request):
     filename = request.GET['log']
     expectedFile = "Results/linearregression"+filename+'.csv'
     results = evaluation(expectedFile)
-    print results
     return HttpResponse(json.dumps(results), content_type="application/json")
 
 def randomforestregressionevaluation(request):
