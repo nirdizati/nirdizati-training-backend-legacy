@@ -1,17 +1,21 @@
+import csv
 import datetime
 import json
 import time
+from os.path import isfile
 
 import pandas as pd
-import numpy as np
 import untangle
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-import csv
+
 
 @csrf_exempt
 def remaining_time_encode(request):
     filename = request.GET['log']
+    if isfile("encodedfiles/indexbased_"+filename):
+        return HttpResponse()
+
     obj = untangle.parse('logdata/' + filename)
 
     traces = obj.log.trace
