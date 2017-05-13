@@ -21,5 +21,7 @@ urlpatterns = [
     url(r'^logs/', include('logs.urls')),
     url(r'^forecasting/', include('forecasting.urls')),
     url(r'^regression/', include('regression.urls')),
+    url(r'^encoding/', include('encoding.urls')),
     url(r'^admin/', admin.site.urls),
+
 ]
