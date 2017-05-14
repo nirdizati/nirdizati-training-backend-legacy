@@ -6,5 +6,6 @@ from . import views
 urlpatterns = [
     url(r'^index', views.index, name='index'),
     url(r'^encode', remaining_time_encode, name='encode'),
-    url(r'^read', views.read, name='read')
+    url(r'^read', views.read, name='read'),
+    url(r'^events', views.events, name='events')
 ]
