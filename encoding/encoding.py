@@ -111,3 +111,31 @@ def get_timestamp_from_event(event):
 def write_pandas_to_csv(df, filename):
     df.to_csv("encodedfiles/indexbased_"+filename,sep=',',mode='w+', index=False)
     return filename
+
+def fast_slow_encode(request):
+    filename = "encodedfiles/indexbased_"+request.GET['log']+".csv"
+    if isfile(filename):
+        prefix = int(request.GET['index']);
+        df = pd.read_csv(filename)
+        df = df[df['executedActivities'] == prefix+1]
+
+        columns = len(df.columns)
+        average_remaining_time = df["remainingTime"].mean()
+
+        df['label'] = df["remainingTime"] < average_remaining_time
+        df = df.drop('executedActivities', 1)
+        df = df.drop('elapsedTime', 1)
+        df = df.drop('remainingTime', 1)
+        df = df.drop('id', 1)
+
+        for i in range(1, columns):
+            if i > prefix:
+                try:
+                    df = df.drop('prefix_'+str(i), 1)
+                except:
+                    print "column prefix_"+str(i)+" does not exist"
+            else:
+                df['prefix_'+str(i)].apply(str)
+
+        return HttpResponse(df.to_csv(index = False))
+    return HttpResponse("File not found")

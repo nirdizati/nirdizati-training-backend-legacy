@@ -7,5 +7,6 @@ urlpatterns = [
     url(r'^index', views.index, name='index'),
     url(r'^encode', remaining_time_encode, name='encode'),
     url(r'^read', views.read, name='read'),
-    url(r'^events', views.events, name='events')
+    url(r'^events', views.events, name='events'),
+    url(r'^fastslowencode', views.fast_slow_encode, name='fastslowencode')
 ]

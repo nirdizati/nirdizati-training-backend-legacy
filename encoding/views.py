@@ -41,3 +41,8 @@ def events(request):
         events = file.read().split("_")
         return HttpResponse(json.dumps(events))
     return HttpResponse("file not found")
+
+
+def fast_slow_encode(request):
+    import encoding
+    return encoding.fast_slow_encode(request)
