@@ -139,3 +139,49 @@ def fast_slow_encode(request):
 
         return HttpResponse(df.to_csv(index = False))
     return HttpResponse("File not found")
+
+def ltl_encode(request):
+    filename = "encodedfiles/indexbased_"+request.GET['log']+".csv"
+    if isfile(filename):
+        activityA = int(request.GET['activityA'])
+        activityB = int(request.GET['activityB'])
+        prefix = int(request.GET['index']);
+        df = pd.read_csv(filename)
+        unique_cases = df.id.unique()
+
+        df['label'] = 0
+        for case in unique_cases:
+            case_df = df[df['id'] == case]
+            maxLengthCase = case_df['executedActivities'].max()
+            case_df = case_df[case_df['executedActivities'] == maxLengthCase]
+            activityAHappened = False
+            activityBHappenedAfter = False
+
+            for i in range(1, maxLengthCase):
+                if activityAHappened:
+                    if activityB == case_df.iloc[0]['prefix_'+str(i)]:
+                        activityBHappenedAfter = True
+                if activityA == case_df.iloc[0]['prefix_'+str(i)]:
+                    activityAHappened = True
+
+            df.label[df['id'] == case] = activityAHappened & activityBHappenedAfter
+
+        df = df[df['executedActivities'] == prefix+1]
+
+        columns = len(df.columns)+10
+        df = df.drop('executedActivities', 1)
+        df = df.drop('elapsedTime', 1)
+        df = df.drop('remainingTime', 1)
+        df = df.drop('id', 1)
+
+        for i in range(1, columns):
+            if i > prefix:
+                try:
+                    df = df.drop('prefix_'+str(i), 1)
+                except:
+                    print "column prefix_"+str(i)+" does not exist"
+            else:
+                df['prefix_'+str(i)].apply(str)
+
+        return HttpResponse(df.to_csv(index = False))
+    return HttpResponse("File not found")

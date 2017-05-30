@@ -46,3 +46,7 @@ def events(request):
 def fast_slow_encode(request):
     import encoding
     return encoding.fast_slow_encode(request)
+
+def ltl_encode(request):
+    import encoding
+    return encoding.ltl_encode(request)
