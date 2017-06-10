@@ -124,13 +124,13 @@ def bool_freq_encode(request):
             bool_encoded_traces.append(bool_trace + [last_event_timestamp_ - last_prefix_remainingTime])
             freq_encoded_traces.append(freq_trace + [last_event_timestamp_ - last_prefix_remainingTime])            
 
-    with open("C:\\thesis\\predict-python\\encodedfiles\\bool_encoded_traces.csv", 'wb') as myfile:
+    with open("encodedfiles/" + filename + "bool_encoded_traces.csv", 'wb') as myfile:
         wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
         wr.writerow(["caseId"] + unique_events_resource + ["remainingTime"])
         for x in bool_encoded_traces:
             wr.writerow(x)
 
-    with open("C:\\thesis\\predict-python\\encodedfiles\\freq_encoded_traces.csv", 'wb') as myfile:
+    with open("encodedfiles/" + filename + "freq_encoded_traces.csv", 'wb') as myfile:
         wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
         wr.writerow(["caseId"] + unique_events_resource)
         for x in freq_encoded_traces:
