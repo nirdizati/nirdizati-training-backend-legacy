@@ -87,8 +87,8 @@ def bool_freq_encode(request):
     filename = request.GET['log']
     prefix_ = request.GET['prefix']
     encodingmethod = request.GET['encodingmethod']
-    if isfile("encodedfiles/indexbased_"+filename):
-        return HttpResponse()
+    # if isfile("encodedfiles/indexbased_"+filename):
+    #     return HttpResponse()
 
     obj = untangle.parse('logdata/' + filename)
 
