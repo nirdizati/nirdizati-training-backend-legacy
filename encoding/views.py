@@ -3,9 +3,16 @@ import json
 from django.http import HttpResponse
 from os.path import isfile
 import pandas as pd
+import django_rq
+def yoolo(x):
+    print x*x
 
 def index(request):
     return HttpResponse()
+
+def yolo(request):
+    django_rq.enqueue(yoolo, 5)
+    return HttpResponse("YOLO")
 
 def read(request):
     filename = "encodedfiles/indexbased_"+request.GET['log']+".csv"
