@@ -10,4 +10,5 @@ urlpatterns = [
     url(r'^events', views.events, name='events'),
     url(r'^fastslowencode', views.fast_slow_encode, name='fastslowencode'),
     url(r'^ltlencode', views.ltl_encode, name='ltlencode'),
+    url(r'^yolo', views.yolo, name='yolo')
 ]
