@@ -24,6 +24,5 @@ urlpatterns = [
     url(r'^classify/', include('classification.urls')),
     url(r'^encoding/', include('encoding.urls')),
     url(r'^admin/', admin.site.urls),
-    url(r'^django-rq/', include('django_rq.urls')),
 
 ]
