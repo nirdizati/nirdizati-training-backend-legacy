@@ -12,7 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 @csrf_exempt
 def remaining_time_encode(request):
-    filename = request.GET['log']
+    filename = request.GET['encodedFile']
     if isfile("encodedfiles/indexbased_"+filename):
         return HttpResponse()
 
@@ -113,9 +113,9 @@ def write_pandas_to_csv(df, filename):
     return filename
 
 def fast_slow_encode(request):
-    filename = "encodedfiles/indexbased_"+request.GET['log']+".csv"
+    filename = "encodedfiles/indexbased_"+request.GET['encodedFile']+".csv"
     if isfile(filename):
-        prefix = int(request.GET['index']);
+        prefix = int(request.GET['prefixLength']);
         df = pd.read_csv(filename)
         df = df[df['executedActivities'] == prefix+1]
 
@@ -143,11 +143,11 @@ def fast_slow_encode(request):
     return None
 
 def ltl_encode(request):
-    filename = "encodedfiles/indexbased_"+request.GET['log']+".csv"
+    filename = "encodedfiles/indexbased_"+request.GET['encodedFile']+".csv"
     if isfile(filename):
         activityA = int(request.GET['activityA'])
         activityB = int(request.GET['activityB'])
-        prefix = int(request.GET['index']);
+        prefix = int(request.GET['prefixLength']);
         df = pd.read_csv(filename)
         unique_cases = df.id.unique()
 

@@ -18,7 +18,7 @@ from sklearn.cross_validation import train_test_split
 import encoding
 
 def read(request):
-    if request.GET['type'] == "fastslow":
+    if request.GET['encodingType'] == "fastslow":
         return encoding.fast_slow_encode(request)
     else:
         return None
