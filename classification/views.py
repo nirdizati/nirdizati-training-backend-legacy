@@ -20,6 +20,8 @@ import encoding
 def read(request):
     if request.GET['encodingType'] == "fastslow":
         return encoding.fast_slow_encode(request)
+    elif request.GET['encodingType'] == "ltl":
+        return encoding.ltl_encode(request)
     else:
         return None
 
