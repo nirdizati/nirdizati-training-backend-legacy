@@ -1,5 +1,5 @@
-from celery import task
+from django_rq import job     
 
-@task()
-def add(x, y):
-    return x + y
+@job("high", timeout=600) # timeout is optional
+def fooo():
+     print "yoloy" # do some logic

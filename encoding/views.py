@@ -3,13 +3,17 @@ import json
 from django.http import HttpResponse
 from os.path import isfile
 import pandas as pd
-from project.tasks import add
+import django_rq
+from project.tasks import fooo
+
 
 def index(request):
     return HttpResponse()
 
+
+
 def yolo(request):
-    add.delay(2, 2)
+    django_rq.enqueue(fooo)
     return HttpResponse("YOLO")
 
 def read(request):

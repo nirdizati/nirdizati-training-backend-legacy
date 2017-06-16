@@ -23,5 +23,6 @@ urlpatterns = [
     url(r'^regression/', include('regression.urls')),
     url(r'^encoding/', include('encoding.urls')),
     url(r'^admin/', admin.site.urls),
+    url(r'^django-rq/', include('django_rq.urls')),
 
 ]
