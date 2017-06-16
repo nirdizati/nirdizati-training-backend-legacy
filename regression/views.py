@@ -33,7 +33,7 @@ def split_data(data):
     train_data = data[ids]
     test_data = data[np.invert(ids)]
     return train_data, test_data
-
+    
 @csrf_exempt
 def linear(request):
     if request.method == 'POST':

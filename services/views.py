@@ -16,8 +16,29 @@ from sklearn.linear_model import LassoCV
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
+
+
+
+
+# def run_configuration(request):
+#     if request.method == 'POST':
+#         configuration_json = json.loads(request.body)
+#         # Encode the file. 
+#         # encode(configuration_json.log, configuration_json.prefix)
+
+#         for encoding in configuration_json.encoding:
+#             for cluster in configuration_json.cluster
+#             if (configuration_json.regression):
+#                 # trigger a regression task 
+#                 # django_rq.enqueue(regression(encoding, cluster, fileName))
+#                 print ('regression      '+ encoding + '   ' + cluster + '    ' + fileName )
+            
+
+
 # Get an instance of a logger
 logger = logging.getLogger("testing")
+
+
 
 def freq_encoding(df, state_list):
 

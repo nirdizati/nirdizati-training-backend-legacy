@@ -11,8 +11,6 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 """
 
 import os
-import djcelery
-
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -42,8 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'pipeline',
     'corsheaders',
-    'djcelery',
-    'kombu.transport.django',
+    "django_rq",
 ]
 
 MIDDLEWARE = [
@@ -144,5 +141,27 @@ CONTENT_TYPES = ['*']
 MAX_UPLOAD_SIZE = "104857600"
 
 #djcelery
-djcelery.setup_loader()
-BROKER_URL = 'django://'
+# djcelery.setup_loader()
+# BROKER_URL = 'django://'
+
+# RQ
+RQ_QUEUES = {
+    'default': {
+        'HOST': 'localhost',
+        'PORT': 6379,
+        'DB': 0,
+        'DEFAULT_TIMEOUT': 360,
+    },
+    'high': {
+        'HOST': 'localhost',
+        'PORT': 6379,
+        'DB': 0,
+        'DEFAULT_TIMEOUT': 360,
+    },
+    'low': {
+        'HOST': 'localhost',
+        'PORT': 6379,
+        'DB': 0,
+        'DEFAULT_TIMEOUT': 360,
+    }
+}
