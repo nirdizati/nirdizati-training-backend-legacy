@@ -13,32 +13,6 @@ from django.views.decorators.csrf import csrf_exempt
 from sklearn import cluster
 
 
-from core_services import encoding
-from core_services import regression
-
-
-encoding.encode("Production.xes", 5)
-#regression.linear("Production.xes", 5, 'boolean', "sd")
-#regression.randomforestregression("Production.xes", 5, 'simple_index', "sd")
-
-
-def get_timestamp_from_event(event):
-    date_time = ''
-    if event is None:
-        return None
-    if type(event.date) is list:
-        for i in range(0, len(event.date)):
-            if u"time:timestamp" == event.date[i]['key']:
-                date_time = event.date[i]['value']
-    else:
-        date_time = event.date['value']
-
-    timestamp = time.mktime(datetime.datetime.strptime(date_time[0:19], "%Y-%m-%dT%H:%M:%S").timetuple())
-
-    return timestamp
-
-#C:\\thesis\\predict-python\\encodedfiles\\bool_encoded_traces.csv
-
 @csrf_exempt
 def remaining_time_encode(request):
     filename = request.GET['log']
@@ -46,7 +20,6 @@ def remaining_time_encode(request):
         return HttpResponse()
 
     obj = untangle.parse('logdata/' + filename)
-
     traces = obj.log.trace
 
     header = ['id', 'remainingTime', 'elapsedTime', 'executedActivities']
