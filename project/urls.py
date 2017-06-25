@@ -18,6 +18,7 @@ from django.contrib import admin
 
 urlpatterns = [
 	url(r'^services/', include('services.urls')),
+    url(r'^core_services/', include('core_services.urls')),
     url(r'^logs/', include('logs.urls')),
     url(r'^forecasting/', include('forecasting.urls')),
     url(r'^regression/', include('regression.urls')),
