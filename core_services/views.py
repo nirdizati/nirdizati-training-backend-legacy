@@ -33,7 +33,7 @@ def listAvailableResultsFiles(request):
     path = "core_results/" + log + "/" + prefix
     try:
         files = os.listdir(path)
-        return HttpResponse(files)
+        return HttpResponse(json.dumps(files), content_type="application/json")
     except OSError as exc:  # Guard against race condition
         return HttpResponse("No Results")
 
@@ -42,7 +42,7 @@ def listAvailableResultsPrefix(request):
     path = "core_results/" + log
     try:
         files = os.listdir(path)
-        return HttpResponse(files)
+        return HttpResponse(json.dumps(files), content_type="application/json")
     except OSError as exc:  # Guard against race condition
         return HttpResponse("No Results")
 
@@ -50,7 +50,7 @@ def listAvailableResultsLog(request):
     path = "core_results/"
     try:
         files = os.listdir(path)
-        return HttpResponse(files)
+        return HttpResponse(json.dumps(files), content_type="application/json")
     except OSError as exc:  # Guard against race condition
         return HttpResponse("No Results")
 
