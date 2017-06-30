@@ -16,7 +16,9 @@ import pandas as pd
 
 import numpy as np
 from sklearn.cluster import KMeans
-# regression.linear("Production.xes", 5, 'boolean', "sd")
+from sklearn.linear_model import Lasso
+from sklearn.cluster import DBSCAN
+
 
 
 def index(request):
@@ -24,15 +26,39 @@ def index(request):
 
 
 def yolo(request):
-    df = pd.read_csv(filepath_or_buffer='core_encodedFiles/boolean_Production.xes_10.csv', header=0)
-    
-    estimator = KMeans(n_clusters=3)    
-    estimator.fit(df)
-    lists = {i: df.iloc[np.where(estimator.labels_ == i)[0]] for i in range(estimator.n_clusters)}
-    print lists[0]
-    # encoding.encode("Production.xes", 9)
+    encoding.encode("Production.xes", 5)
+    regression.linear("Production.xes", 5, 'boolean', "sd")
 
-    # #regression.linear("Production.xes", 9, 'xg', "sd")
+    # df = pd.read_csv(filepath_or_buffer='core_encodedFiles/simpleIndex_Production.xes_16.csv', header=0)
+    # data_ = df[["Id", "remainingTime"]]
+
+    # estimator = DBSCAN(eps=0.3, min_samples=10,  metric='haversine')    
+    # estimator.fit(data_)
+    # print estimator
+    # labels = estimator.labels_
+    # n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
+    # print n_clusters
+    # cluster_lists = {i: df.iloc[np.where(estimator.labels_ == i)[0]] for i in range(n_clusters)}
+    # print len(cluster_lists)    
+    # writeHeader = True
+    # for cluster_list in cluster_lists:
+    #     clusterd_data = cluster_lists[cluster_list]
+    #     original_cluster_data = cluster_lists[cluster_list]
+    #     lm = Lasso(fit_intercept=True, warm_start=True)
+    #     y = clusterd_data['remainingTime']
+    #     clusterd_data = clusterd_data.drop('remainingTime', 1)
+    #     lm.fit(clusterd_data, y)
+    #     original_cluster_data['prediction'] = lm.predict(clusterd_data)
+    #     if writeHeader is True:
+    #         original_cluster_data.to_csv('core_results/cluster.csv', sep=',', mode='a', header=True, index=False)
+    #         writeHeader = False
+    #     else:
+    #         original_cluster_data.to_csv('core_results/cluster.csv', sep=',', mode='a', header=False, index=False)
+            
+
+    # 
+
+    #regression.linear("Production.xes", 9, 'xg', "sd")
     # # regression.linear("Production.xes", 5, 'simple_index', "sd")
     # regression.xgboost("Production.xes", 9, 'simpleIndex', "sd")
     # # fileName, prefix, encoding, cluster, regression
@@ -73,7 +99,8 @@ def fileToJsonResults(request):
     prefix = request.GET['Prefix']
     encoding = request.GET['encoding']
     regMethod = request.GET['method']
-    expected_filename = 'core_results/' + log + '/' + str(prefix) + '/' + regMethod + '_' + encoding + '.csv'
+    cluster = request.GET['cluster']
+    expected_filename = 'core_results/' + log + '/' + str(prefix) + '/' + regMethod + '_' + encoding + '_'  + cluster + '_clustering.csv'
     data = resultsAsJson(expected_filename)
     if data is not None:
         return HttpResponse(data, content_type="application/json")
@@ -91,9 +118,10 @@ def run_configuration(request):
         # Encode the file.
         encoding.encode(log, prefix)
         for encodingMethod in configuration_json['encoding']:
-            for regression in configuration_json['regression']:
-                django_rq.enqueue(tasks.regressionTask, log,
-                                  prefix, encodingMethod, "sd", regression)
+            for clustering in configuration_json['clustering']:
+                for regression in configuration_json['regression']:
+                    django_rq.enqueue(tasks.regressionTask, log,
+                                      prefix, encodingMethod, clustering, regression)
     return HttpResponse("YOLO")
 
 
