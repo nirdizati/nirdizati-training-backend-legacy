@@ -128,19 +128,19 @@ def encode(fileName, prefix):
         for x in freq_encoded_traces:
             wr.writerow(x)
 
-    with open('core_encodedFiles/complex_index_' + fileName + '_' + str(prefix) + '.csv', 'wb') as myfile:
+    with open('core_encodedFiles/complexIndex_' + fileName + '_' + str(prefix) + '.csv', 'wb') as myfile:
         wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
         wr.writerow(["Id"] + event_attr_names_header + ["remainingTime"])
         for x in complex_index_traces:
             wr.writerow(x)
 
-    with open('core_encodedFiles/simple_index_' + fileName + '_' + str(prefix) + '.csv', 'wb') as myfile:
+    with open('core_encodedFiles/simpleIndex_' + fileName + '_' + str(prefix) + '.csv', 'wb') as myfile:
         wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
         wr.writerow(["Id"] + events_header + ["remainingTime"])
         for x in simple_index_traces:
             wr.writerow(x)
 
-    with open('core_encodedFiles/index_latest_payload_' + fileName + '_' + str(prefix) + '.csv', 'wb') as myfile:
+    with open('core_encodedFiles/indexLatestPayload_' + fileName + '_' + str(prefix) + '.csv', 'wb') as myfile:
         wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
         wr.writerow(["Id"] + events_header +
                     event_attr_latest_names + ["remainingTime"])

@@ -10,6 +10,11 @@ urlpatterns = [
     url(r'^listAvailableResultsPrefix', views.listAvailableResultsPrefix,
         name='listAvailableResultsPrefix'),
     url(r'^listAvailableResultsLog', views.listAvailableResultsLog,
-        name='listAvailableResultsLog')
+        name='listAvailableResultsLog'),
+    url(r'^fileToJsonResults', views.fileToJsonResults,
+        name='fileToJsonResults'),
+     url(r'^downloadCsv', views.downloadCsv,
+        name='downloadCsv')
+    
 
 ]
