@@ -33,7 +33,7 @@ def linear(fileName, prefix, encoding, cluster):
 
 
 def randomforestregression(fileName, prefix, encoding, cluster):
-    if isfile('core_results/' + fileName + '/' + str(prefix) + '/' + 'randomforest' + encoding + '.csv'):
+    if isfile('core_results/' + fileName + '/' + str(prefix) + '/' + 'randomforest_' + encoding + '.csv'):
         return None
 
     train_data, test_data, original_test_data = prep_data(
@@ -47,16 +47,16 @@ def randomforestregression(fileName, prefix, encoding, cluster):
 
     make_dir('core_results/' + fileName + '/' + str(prefix))
 
-    with open('core_predictionmodels/' + fileName + '/' + str(prefix) + '/' + 'randomforest' + encoding + '.pkl', 'wb') as fid:
+    with open('core_predictionmodels/' + fileName + '/' + str(prefix) + '/' + 'randomforest_' + encoding + '.pkl', 'wb') as fid:
         cPickle.dump(rf, fid)
 
     original_test_data['prediction'] = rf.predict(test_data)
     original_test_data.to_csv('core_results/' + fileName + '/' + str(prefix) +
-                              '/' + 'randomforest' + encoding + '.csv', sep=',', mode='w+', index=False)
+                              '/' + 'randomForest_' + encoding + '.csv', sep=',', mode='w+', index=False)
 
 
 def xgboost(fileName, prefix, encoding, cluster):
-    if isfile('core_results/' + fileName + '/' + str(prefix) + '/' + 'xgboost' + encoding + '.csv'):
+    if isfile('core_results/' + fileName + '/' + str(prefix) + '/' + 'xgboost_' + encoding + '.csv'):
         return None
     train_data, test_data, original_test_data = prep_data(
         fileName, prefix, encoding)
@@ -69,12 +69,12 @@ def xgboost(fileName, prefix, encoding, cluster):
 
     make_dir('core_results/' + fileName + '/' + str(prefix))
 
-    with open('core_predictionmodels/' + fileName + '/' + str(prefix) + '/' + 'xgboost' + encoding + '.pkl', 'wb') as fid:
+    with open('core_predictionmodels/' + fileName + '/' + str(prefix) + '/' + 'xgboost_' + encoding + '.pkl', 'wb') as fid:
         cPickle.dump(clf, fid)
 
     original_test_data['prediction'] = clf.predict(test_data)
     original_test_data.to_csv('core_results/' + fileName + '/' + str(
-        prefix) + '/' + 'xgboost' + encoding + '.csv', sep=',', mode='w+', index=False)
+        prefix) + '/' + 'xgboost_' + encoding + '.csv', sep=',', mode='w+', index=False)
 
 
 def split_data(data):
