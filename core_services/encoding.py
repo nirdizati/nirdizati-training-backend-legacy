@@ -4,6 +4,11 @@ import csv
 
 from os.path import isfile
 import untangle
+<<<<<<< HEAD
+=======
+import pandas as pd
+
+>>>>>>> resolvehead
 
 
 def get_timestamp_from_event(event):
@@ -152,7 +157,21 @@ def encode(fileName, prefix):
         for key, value in attrs_dictionary.items():
             wr.writerow([key, value])
 
+<<<<<<< HEAD
 
+=======
+def fast_slow_encode(fileName, prefix, encoding):
+    filename = 'core_encodedFiles/'+ encoding +'_' + fileName + '_' + str(prefix) + '.csv'
+    if isfile(filename):
+        df = pd.read_csv(filename)
+        average_remaining_time = df["remainingTime"].mean()
+
+        df['label'] = df["remainingTime"] < average_remaining_time
+        df = df.sample(frac=1)
+
+        return df
+    return None
+>>>>>>> resolvehead
 # bool_db = cluster.DBSCAN(eps=2,min_samples=5)
 # 	bool_db.fit(bool_encoded_traces)
 

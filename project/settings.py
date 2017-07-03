@@ -150,18 +150,30 @@ RQ_QUEUES = {
         'HOST': 'localhost',
         'PORT': 6379,
         'DB': 0,
+<<<<<<< HEAD
         'DEFAULT_TIMEOUT': 360,
+=======
+        'DEFAULT_TIMEOUT': 3600,
+>>>>>>> resolvehead
     },
     'high': {
         'HOST': 'localhost',
         'PORT': 6379,
         'DB': 0,
+<<<<<<< HEAD
         'DEFAULT_TIMEOUT': 360,
+=======
+        'DEFAULT_TIMEOUT': 3600,
+>>>>>>> resolvehead
     },
     'low': {
         'HOST': 'localhost',
         'PORT': 6379,
         'DB': 0,
+<<<<<<< HEAD
         'DEFAULT_TIMEOUT': 360,
+=======
+        'DEFAULT_TIMEOUT': 3600,
+>>>>>>> resolvehead
     }
 }

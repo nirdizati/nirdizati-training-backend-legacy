@@ -197,6 +197,8 @@ def fast_slow_encode(request):
             else:
                 df['prefix_'+str(i)].apply(str)
 
+        df = df.sample(frac=1)
+
         return HttpResponse(df.to_csv(index = False))
     return HttpResponse("File not found")
 
@@ -242,6 +244,8 @@ def ltl_encode(request):
                     print "column prefix_"+str(i)+" does not exist"
             else:
                 df['prefix_'+str(i)].apply(str)
+
+        df = df.sample(frac=1)
 
         return HttpResponse(df.to_csv(index = False))
     return HttpResponse("File not found")
