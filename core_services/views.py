@@ -10,7 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponseBadRequest
 
 
-from core_services import encoding, regression
+from core_services import encoding, prediction
 from project import tasks
 import pandas as pd
 
@@ -27,7 +27,19 @@ def index(request):
 
 def yolo(request):
     encoding.encode("Production.xes", 5)
-    regression.linear("Production.xes", 5, 'boolean', "sd")
+    
+    prediction.regressior("Production.xes", 5, 'simpleIndex', "Kmeans", 'linear')
+    # prediction.classifier("Production.xes", 5, 'simpleIndex', "Kmeans", 'KNN')
+    # prediction.classifier("Production.xes", 5, 'simpleIndex', "Kmeans", 'RandomForest')
+    # prediction.classifier("Production.xes", 5, 'simpleIndex', "Kmeans", 'DecisionTree')
+
+    # prediction.classifier("Production.xes", 13, 'simpleIndex', "None", 'KNN')
+    # prediction.classifier("Production.xes", 13, 'simpleIndex', "None", 'RandomForest')
+    # prediction.classifier("Production.xes", 13, 'simpleIndex', "None", 'DecisionTree')
+
+
+
+    #regression.linear()
 
     # df = pd.read_csv(filepath_or_buffer='core_encodedFiles/simpleIndex_Production.xes_16.csv', header=0)
     # data_ = df[["Id", "remainingTime"]]
@@ -69,7 +81,9 @@ def yolo(request):
 def listAvailableResultsFiles(request):
     log = request.GET['log']
     prefix = request.GET['Prefix']
-    path = "core_results/" + log + "/" + prefix
+    res_type = request.GET['restype']
+    # res_type = "_class"
+    path = "core_results" + res_type + '/' + log + "/" + prefix
     try:
         files = os.listdir(path)
         return HttpResponse(json.dumps(files), content_type="application/json")
@@ -78,7 +92,9 @@ def listAvailableResultsFiles(request):
 
 def listAvailableResultsPrefix(request):
     log = request.GET['log']
-    path = "core_results/" + log
+    res_type = request.GET['restype']
+
+    path = "core_results" + res_type + '/' + log
     try:
         files = os.listdir(path)
         return HttpResponse(json.dumps(files), content_type="application/json")
@@ -86,21 +102,36 @@ def listAvailableResultsPrefix(request):
         return HttpResponse("No Results")
 
 def listAvailableResultsLog(request):
-    path = "core_results/"
+    res_type = request.GET['restype']
+    path = "core_results" + res_type
+
     try:
         files = os.listdir(path)
         return HttpResponse(json.dumps(files), content_type="application/json")
     except OSError as exc:  # Guard against race condition
         return HttpResponse("No Results")
 
+def fileToJsonGeneralResults(request):
+    log = request.GET['log']
+    prefix = request.GET['Prefix']
+    res_type = request.GET['restype']
 
+    expected_filename = 'core_results'+ res_type + '/' + log + '/' + str(prefix) + '/General.csv'
+    data = resultsAsJson(expected_filename)
+    if data is not None:
+        return HttpResponse(data, content_type="application/json")
+    else:
+        return HttpResponseBadRequest()
+    
 def fileToJsonResults(request):
     log = request.GET['log']
     prefix = request.GET['Prefix']
     encoding = request.GET['encoding']
     regMethod = request.GET['method']
     cluster = request.GET['cluster']
-    expected_filename = 'core_results/' + log + '/' + str(prefix) + '/' + regMethod + '_' + encoding + '_'  + cluster + '_clustering.csv'
+    res_type = request.GET['restype']
+
+    expected_filename = 'core_results'+ res_type + '/' + log + '/' + str(prefix) + '/' + regMethod + '_' + encoding + '_'  + cluster + '_clustering.csv'
     data = resultsAsJson(expected_filename)
     if data is not None:
         return HttpResponse(data, content_type="application/json")
@@ -122,6 +153,22 @@ def run_configuration(request):
                 for regression in configuration_json['regression']:
                     django_rq.enqueue(tasks.regressionTask, log,
                                       prefix, encodingMethod, clustering, regression)
+    return HttpResponse("YOLO")
+
+@csrf_exempt
+def run_class_configuration(request):
+    if request.method == 'POST':
+        configuration_json = json.loads(request.body)
+        print configuration_json
+        log = configuration_json["log"]
+        prefix = configuration_json['prefix']
+        # Encode the file.
+        encoding.encode(log, prefix)
+        for encodingMethod in configuration_json['encoding']:
+            for clustering in configuration_json['clustering']:
+                for classification in configuration_json['classification']:
+                    django_rq.enqueue(tasks.classifierTask, log,
+                                      prefix, encodingMethod, clustering, classification)
     return HttpResponse("YOLO")
 
 
