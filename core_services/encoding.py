@@ -70,8 +70,12 @@ def encode(fileName, prefix):
             bool_trace.append(trace_case_id)
             freq_trace.append(trace_case_id)
             trace_events = list()
+
+            first_event_timestamp_ = get_timestamp_from_event(
+                trace.event[0])
             last_event_timestamp_ = get_timestamp_from_event(
                 trace.event[len(trace.event) - 1])
+            duration = last_event_timestamp_ - first_event_timestamp_
             last_prefix_remainingTime = get_timestamp_from_event(
                 trace.event[prefix - 1])
             last_prefix_event_attr = list()
@@ -99,11 +103,11 @@ def encode(fileName, prefix):
 
                 trace_events.append(event.string[2]['value'])
             complex_index_traces.append(
-                [trace_case_id] + event_attr_values + [last_event_timestamp_ - last_prefix_remainingTime])
+                [trace_case_id] + event_attr_values + [last_event_timestamp_ - last_prefix_remainingTime] + [duration])
             latest_payload_index_traces.append([trace_case_id] + trace_event_ids + last_prefix_event_attr + [
-                                               last_event_timestamp_ - last_prefix_remainingTime])
+                                               last_event_timestamp_ - last_prefix_remainingTime] + [duration])
             simple_index_traces.append(
-                [trace_case_id] + trace_event_ids + [last_event_timestamp_ - last_prefix_remainingTime])
+                [trace_case_id] + trace_event_ids + [last_event_timestamp_ - last_prefix_remainingTime] + [duration])
 
             # Bool and Freq encoding
             for unique_id in unique_events_resource:
@@ -114,38 +118,38 @@ def encode(fileName, prefix):
                     bool_trace.append("0")
                     freq_trace.append("0")
             bool_encoded_traces.append(
-                bool_trace + [last_event_timestamp_ - last_prefix_remainingTime])
+                bool_trace + [last_event_timestamp_ - last_prefix_remainingTime] + [duration])
             freq_encoded_traces.append(
-                freq_trace + [last_event_timestamp_ - last_prefix_remainingTime])
+                freq_trace + [last_event_timestamp_ - last_prefix_remainingTime] + [duration])
 
     with open('core_encodedFiles/boolean_' + fileName + '_' + str(prefix) + '.csv', 'wb') as myfile:
         wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
-        wr.writerow(["Id"] + unique_events_resource + ["remainingTime"])
+        wr.writerow(["Id"] + unique_events_resource + ["remainingTime"] + ['duration'])
         for x in bool_encoded_traces:
             wr.writerow(x)
 
     with open('core_encodedFiles/frequency_' + fileName + '_' + str(prefix) + '.csv', 'wb') as myfile:
         wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
-        wr.writerow(["Id"] + unique_events_resource + ["remainingTime"])
+        wr.writerow(["Id"] + unique_events_resource + ["remainingTime"] + ['duration'])
         for x in freq_encoded_traces:
             wr.writerow(x)
 
     with open('core_encodedFiles/complexIndex_' + fileName + '_' + str(prefix) + '.csv', 'wb') as myfile:
         wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
-        wr.writerow(["Id"] + event_attr_names_header + ["remainingTime"])
+        wr.writerow(["Id"] + event_attr_names_header + ["remainingTime"] + ['duration'])
         for x in complex_index_traces:
             wr.writerow(x)
 
     with open('core_encodedFiles/simpleIndex_' + fileName + '_' + str(prefix) + '.csv', 'wb') as myfile:
         wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
-        wr.writerow(["Id"] + events_header + ["remainingTime"])
+        wr.writerow(["Id"] + events_header + ["remainingTime"] + ['duration'])
         for x in simple_index_traces:
             wr.writerow(x)
 
     with open('core_encodedFiles/indexLatestPayload_' + fileName + '_' + str(prefix) + '.csv', 'wb') as myfile:
         wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
         wr.writerow(["Id"] + events_header +
-                    event_attr_latest_names + ["remainingTime"])
+                    event_attr_latest_names + ["remainingTime"] + ['duration'])
         for x in latest_payload_index_traces:
             wr.writerow(x)
 
@@ -154,13 +158,16 @@ def encode(fileName, prefix):
         for key, value in attrs_dictionary.items():
             wr.writerow([key, value])
 
-def fast_slow_encode(fileName, prefix, encoding):
+def fast_slow_encode(fileName, prefix, encoding, label, threshold):
     filename = 'core_encodedFiles/'+ encoding +'_' + fileName + '_' + str(prefix) + '.csv'
     if isfile(filename):
         df = pd.read_csv(filename)
-        average_remaining_time = df["remainingTime"].mean()
+        if threshold == "default":
+            threshold_ = df[label].mean()
+        else:
+            threshold_ = float(threshold)
 
-        df['label'] = df["remainingTime"] < average_remaining_time
+        df['label'] = df[label] < threshold_
         df = df.sample(frac=1)
 
         return df

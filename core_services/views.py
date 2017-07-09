@@ -29,13 +29,13 @@ def yolo(request):
     encoding.encode("Production.xes", 5)
     
     prediction.regressior("Production.xes", 5, 'simpleIndex', "Kmeans", 'linear')
-    # prediction.classifier("Production.xes", 5, 'simpleIndex', "Kmeans", 'KNN')
+    prediction.classifier("Production.xes", 5, 'simpleIndex', "Kmeans", 'KNN', 'remainingTime', 100)
     # prediction.classifier("Production.xes", 5, 'simpleIndex', "Kmeans", 'RandomForest')
     # prediction.classifier("Production.xes", 5, 'simpleIndex', "Kmeans", 'DecisionTree')
 
     # prediction.classifier("Production.xes", 13, 'simpleIndex', "None", 'KNN')
     # prediction.classifier("Production.xes", 13, 'simpleIndex', "None", 'RandomForest')
-    # prediction.classifier("Production.xes", 13, 'simpleIndex', "None", 'DecisionTree')
+    # prediction.classifier("Production.xes", 3, 'complexIndex', "Kmeans", 'DecisionTree')
 
 
 
@@ -101,6 +101,33 @@ def listAvailableResultsPrefix(request):
     except OSError as exc:  # Guard against race condition
         return HttpResponse("No Results")
 
+
+def listAvailableRules(request):
+    log = request.GET['log']
+    res_type = request.GET['restype']
+    prefix = request.GET['Prefix']
+
+    path = "core_results" + res_type + '/' + log + '/' + prefix
+    try:
+        files = os.listdir(path)
+        return HttpResponse(json.dumps(files), content_type="application/json")
+    except OSError as exc:  # Guard against race condition
+        return HttpResponse("No Results")
+
+def listAvailableThreshold(request):
+    log = request.GET['log']
+    res_type = request.GET['restype']
+    prefix = request.GET['Prefix']
+    rule = request.GET['rule']
+
+    path = "core_results" + res_type + '/' + log + '/' + prefix + '/' + rule
+    try:
+        files = os.listdir(path)
+        return HttpResponse(json.dumps(files), content_type="application/json")
+    except OSError as exc:  # Guard against race condition
+        return HttpResponse("No Results")
+
+
 def listAvailableResultsLog(request):
     res_type = request.GET['restype']
     path = "core_results" + res_type
@@ -131,7 +158,14 @@ def fileToJsonResults(request):
     cluster = request.GET['cluster']
     res_type = request.GET['restype']
 
-    expected_filename = 'core_results'+ res_type + '/' + log + '/' + str(prefix) + '/' + regMethod + '_' + encoding + '_'  + cluster + '_clustering.csv'
+    if res_type == '_class':
+        rule = request.GET['rule']
+        threshold = request.GET['threshold']
+        expected_filename = 'core_results'+ res_type + '/' + log + '/' + str(prefix) + '/' + rule + '/' + str(threshold)  + '/' + regMethod + '_' + encoding + '_'  + cluster + '_clustering.csv'
+
+    else:
+        expected_filename = 'core_results'+ res_type + '/' + log + '/' + str(prefix) + '/' + regMethod + '_' + encoding + '_'  + cluster + '_clustering.csv'
+    
     data = resultsAsJson(expected_filename)
     if data is not None:
         return HttpResponse(data, content_type="application/json")
@@ -162,13 +196,15 @@ def run_class_configuration(request):
         print configuration_json
         log = configuration_json["log"]
         prefix = configuration_json['prefix']
+        rule = request.GET['rule']
+        threshold = request.GET['threshold']
         # Encode the file.
         encoding.encode(log, prefix)
         for encodingMethod in configuration_json['encoding']:
             for clustering in configuration_json['clustering']:
                 for classification in configuration_json['classification']:
                     django_rq.enqueue(tasks.classifierTask, log,
-                                      prefix, encodingMethod, clustering, classification)
+                                      prefix, encodingMethod, clustering, classification, rule, threshold)
     return HttpResponse("YOLO")
 
 

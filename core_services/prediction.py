@@ -22,7 +22,7 @@ from sklearn import metrics
 
 
 
-def classifier(fileName, prefix, encoding, cluster, method):
+def classifier(fileName, prefix, encoding, cluster, method, label, threshold):
     if isfile('core_results_class/' + fileName + '/' + str(prefix) + '/' + method + '_' + encoding + '_'  + cluster + '_clustering.csv'):
         return None
     
@@ -33,19 +33,17 @@ def classifier(fileName, prefix, encoding, cluster, method):
     elif method == "DecisionTree":  
         clf = DecisionTreeClassifier()
 
-    df = fast_slow_encode(fileName, prefix, encoding)
+    df = fast_slow_encode(fileName, prefix, encoding, label, threshold)
+    
     train_data, test_data = split_class_data(df)
     to_predict = 'label'
     
-    make_dir('core_results_class/' + fileName + '/' + str(prefix))
+    make_dir('core_results_class/' + fileName + '/' + str(prefix) + '/' + label + '/' + str(threshold))
 
     if cluster != "None":
         estimator = KMeans(n_clusters=3)
         estimator.fit(train_data)
-        estimator2 = KMeans(n_clusters=3)
-        estimator2.fit(test_data)
-    
-        orginal_cluster_lists = {i: test_data.iloc[np.where(estimator2.labels_ == i)[0]] for i in range(estimator2.n_clusters)}    
+        orginal_cluster_lists = {i: test_data.iloc[np.where(estimator.predict(test_data) == i)[0]] for i in range(estimator.n_clusters)}    
         cluster_lists = {i: train_data.iloc[np.where(estimator.labels_ == i)[0]] for i in range(estimator.n_clusters)}
 
         writeHeader = True
@@ -68,12 +66,12 @@ def classifier(fileName, prefix, encoding, cluster, method):
             clusterd_test_data["predicted"] = prediction    
             
             if writeHeader is True:
-                clusterd_test_data.to_csv('core_results_class/' + fileName + '/' + str(prefix) + '/' +
+                clusterd_test_data.to_csv('core_results_class/' + fileName + '/' + str(prefix) + '/' + label + '/' + str(threshold) + '/' + 
                               method + '_' + encoding + '_'  + cluster + '_clustering.csv', sep=',',header=True, mode='a', index=False)
                 writeHeader = False
 
             else:
-                clusterd_test_data.to_csv('core_results_class/' + fileName + '/' + str(prefix) + '/' +
+                clusterd_test_data.to_csv('core_results_class/' + fileName + '/' + str(prefix) + '/' + label  + '/' + str(threshold) + '/' + 
                               method + '_' + encoding + '_'  + cluster + '_clustering.csv', sep=',',header=False, mode='a', index=False)
     else:
         y = train_data[to_predict]
@@ -89,28 +87,23 @@ def classifier(fileName, prefix, encoding, cluster, method):
         prediction = clf.predict(test_data)
         test_data["actual"] = actual
         test_data["predicted"] = prediction
-        print "------------------------------------------------------"
-        print actual
-        test_data.to_csv('core_results_class/' + fileName + '/' + str(prefix) + '/'
+        test_data.to_csv('core_results_class/' + fileName + '/' + str(prefix) + '/' + label + '/' + str(threshold) + '/' + 
                                   + method + '_' + encoding + '_'  + cluster + '_clustering.csv', sep=',', mode='w+', index=False)
 
 
-    df = pd.read_csv(filepath_or_buffer='core_results_class/' + fileName + '/' + str(prefix) + '/' + method + '_' + encoding + '_'  + cluster + '_clustering.csv', header=0, index_col=0)
-    print "------------------------------------------------------"
+    df = pd.read_csv(filepath_or_buffer='core_results_class/' + fileName + '/' + str(prefix)+ '/' + label + '/' + str(threshold) + '/' +  method + '_' + encoding + '_'  + cluster + '_clustering.csv', header=0, index_col=0)
     actual_ = df['actual'].values
     predicted_ =  df['predicted'].values
-    #actual = actual.drop("Id", 1)
-    print actual
-    f1score = calculate_results(actual_, predicted_)
-    #auc = metrics.auc(actual_, predicted_)
-
+    
+    f1score = 0 # calculate_results(actual_, predicted_)
+    
     methodVal = method + '_' + encoding + '_'  + cluster + '_clustering'
     # results = {method: methodVal, rmse: rmse, mae: mae}
     # results.to_csv('core_results/blabal.csv')
     writeHeader = True
-    if isfile('core_results_class/' + fileName + '/' + str(prefix) + '/General.csv'):
+    if isfile('core_results_class/' + fileName + '/' + str(prefix) + '/' + label + '/' + str(threshold) + '/General.csv'):
             writeHeader = False
-    with open('core_results_class/' + fileName + '/' + str(prefix) + '/General.csv', 'a') as csvfile:
+    with open('core_results_class/' + fileName + '/' + str(prefix) + '/' + label + '/' + str(threshold) + '/General.csv', 'a') as csvfile:
         fieldnames = ['Run', 'Fmeasure', 'AUC']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         if writeHeader is True:
@@ -139,11 +132,11 @@ def regressior(fileName, prefix, encoding, cluster, method):
         estimator = KMeans(n_clusters=3)
         estimator.fit(train_data)
         estimator2 = KMeans(n_clusters=3)
-        estimator2.fit(original_test_data)
+        estimator2.fit(test_data)
     
-        orginal_cluster_lists = {i: original_test_data.iloc[np.where(estimator2.labels_ == i)[0]] for i in range(estimator2.n_clusters)}    
+        orginal_cluster_lists = {i: original_test_data.iloc[np.where(estimator.predict(original_test_data.drop('Id', 1)) == i)[0]] for i in range(estimator2.n_clusters)}    
         cluster_lists = {i: train_data.iloc[np.where(estimator.labels_ == i)[0]] for i in range(estimator.n_clusters)}
-
+        # print orginal_cluster_lists
         writeHeader = True
         for cluster_list in cluster_lists:
             clusterd_train_data = cluster_lists[cluster_list]
@@ -176,15 +169,12 @@ def regressior(fileName, prefix, encoding, cluster, method):
         with open('core_predictionmodels/' + fileName + '/' + str(prefix) + '/' + method + '_' + encoding + '.pkl', 'wb') as fid:
             cPickle.dump(regressor, fid)
 
-        print original_test_data.shape
-        print test_data.shape
         original_test_data['prediction'] = regressor.predict(test_data)
         original_test_data.to_csv('core_results_regg/' + fileName + '/' + str(prefix) + '/'
                                   + method + '_' + encoding + '_'  + cluster + '_clustering.csv', sep=',', mode='w+', index=False)
 
 
     df = pd.read_csv(filepath_or_buffer='core_results_regg/' + fileName + '/' + str(prefix) + '/' + method + '_' + encoding + '_'  + cluster + '_clustering.csv', header=0, index_col=0)
-
     df['remainingTime'] = df['remainingTime']/3600
     df['prediction'] = df['prediction'] / 3600
     rmse = sqrt(mean_squared_error(df['remainingTime'], df['prediction']))
@@ -269,10 +259,14 @@ def prep_data(fileName, prefix, encoding):
                      encoding + '_' + fileName + '_' + str(prefix) + '.csv', header=0)
     train_data, test_data = split_data(df)
 
+    train_data = train_data.drop('duration', 1)
+    test_data = test_data.drop('duration', 1)
+
     original_test_data = test_data
 
     train_data = train_data.drop('Id', 1)
     test_data = test_data.drop('Id', 1)
+
 
     test_data = test_data.drop('remainingTime', 1)
 
@@ -304,15 +298,27 @@ def calculate_results(prediction, actual):
     true_negative = 0
 
     for i in range(0, len(actual)):
-        if actual[i] == prediction[i] & actual[i] == True:
-            true_positive += 1
-        elif actual[i] != prediction[i] & actual[i] == True:
-            false_positive += 1
-        elif actual[i] != prediction[i] & actual[i] == False:
-            false_negative += 1
-        elif actual[i] == prediction[i] & actual[i] == False:
-            true_negative += 1
+        if actual[i] == True:
+            if actual[i] == prediction[i]:
+                true_positive += 1
+            else:
+                false_positive += 1
+        else:
+            if actual[i] == prediction[i]:
+                true_negative += 1
+            else:
+                false_negative += 1
+       
+        # if actual[i] == prediction[i] and actual[i] == True:
+        #     true_positive += 1
+        # elif actual[i] != prediction[i] and actual[i] == True:
+        #     false_positive += 1
+        # elif actual[i] != prediction[i] and actual[i] == False:
+        #     false_negative += 1
+        # elif actual[i] == prediction[i] and actual[i] == False:
+        #     true_negative += 1
 
+    print 'TP: ' + str(true_positive) + 'FP: ' + str(false_positive) + 'FN: ' + str(false_negative)
     precision = float(true_positive) / (true_positive + false_positive)
 
     recall = float(true_positive) / (true_positive + false_negative)
