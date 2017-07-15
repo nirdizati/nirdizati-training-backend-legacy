@@ -87,8 +87,8 @@ def classifier(fileName, prefix, encoding, cluster, method, label, threshold):
         prediction = clf.predict(test_data)
         test_data["actual"] = actual
         test_data["predicted"] = prediction
-        test_data.to_csv('core_results_class/' + fileName + '/' + str(prefix) + '/' + label + '/' + str(threshold) + '/' + 
-                                  + method + '_' + encoding + '_'  + cluster + '_clustering.csv', sep=',', mode='w+', index=False)
+        test_data.to_csv('core_results_class/' + fileName + '/' + str(prefix) + '/' + label  + '/' + str(threshold) + '/' + 
+                              method + '_' + encoding + '_'  + cluster + '_clustering.csv', sep=',', mode='w+', index=False)
 
 
     df = pd.read_csv(filepath_or_buffer='core_results_class/' + fileName + '/' + str(prefix)+ '/' + label + '/' + str(threshold) + '/' +  method + '_' + encoding + '_'  + cluster + '_clustering.csv', header=0, index_col=0)

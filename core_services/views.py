@@ -28,8 +28,8 @@ def index(request):
 def yolo(request):
     encoding.encode("Production.xes", 5)
     
-    prediction.regressior("Production.xes", 5, 'simpleIndex', "Kmeans", 'linear')
-    prediction.classifier("Production.xes", 5, 'simpleIndex', "Kmeans", 'KNN', 'remainingTime', 100)
+    # prediction.regressior("Production.xes", 5, 'simpleIndex', "Kmeans", 'linear')
+    prediction.classifier("Production.xes", 12, 'complexIndex', "None", 'DecisionTree', 'remainingTime', 1500)
     # prediction.classifier("Production.xes", 5, 'simpleIndex', "Kmeans", 'RandomForest')
     # prediction.classifier("Production.xes", 5, 'simpleIndex', "Kmeans", 'DecisionTree')
 
@@ -196,8 +196,8 @@ def run_class_configuration(request):
         print configuration_json
         log = configuration_json["log"]
         prefix = configuration_json['prefix']
-        rule = request.GET['rule']
-        threshold = request.GET['threshold']
+        rule = configuration_json['rule']
+        threshold = configuration_json['threshold']
         # Encode the file.
         encoding.encode(log, prefix)
         for encodingMethod in configuration_json['encoding']:

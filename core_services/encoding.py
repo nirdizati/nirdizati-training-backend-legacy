@@ -167,6 +167,9 @@ def fast_slow_encode(fileName, prefix, encoding, label, threshold):
         else:
             threshold_ = float(threshold)
 
+        print threshold_
+        print df[label][0]
+        print df[label][0] < threshold_
         df['label'] = df[label] < threshold_
         df = df.sample(frac=1)
 
