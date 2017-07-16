@@ -82,8 +82,13 @@ def listAvailableResultsFiles(request):
     log = request.GET['log']
     prefix = request.GET['Prefix']
     res_type = request.GET['restype']
-    # res_type = "_class"
-    path = "core_results" + res_type + '/' + log + "/" + prefix
+    if res_type == '_class':
+        rule = request.GET['rule']
+        threshold = request.GET['threshold']
+        path = 'core_results'+ res_type + '/' + log + '/' + str(prefix) + '/' + rule + '/' + str(threshold)
+
+    else:
+        path = "core_results" + res_type + '/' + log + "/" + prefix
     try:
         files = os.listdir(path)
         return HttpResponse(json.dumps(files), content_type="application/json")
@@ -143,7 +148,14 @@ def fileToJsonGeneralResults(request):
     prefix = request.GET['Prefix']
     res_type = request.GET['restype']
 
-    expected_filename = 'core_results'+ res_type + '/' + log + '/' + str(prefix) + '/General.csv'
+    if res_type == '_class':
+        rule = request.GET['rule']
+        threshold = request.GET['threshold']
+        expected_filename = 'core_results'+ res_type + '/' + log + '/' + str(prefix) + '/' + rule + '/' + str(threshold) + '/General.csv'
+
+    else:
+        expected_filename = 'core_results'+ res_type + '/' + log + '/' + str(prefix) + '/General.csv'
+    
     data = resultsAsJson(expected_filename)
     if data is not None:
         return HttpResponse(data, content_type="application/json")
@@ -171,6 +183,7 @@ def fileToJsonResults(request):
         return HttpResponse(data, content_type="application/json")
     else:
         return HttpResponseBadRequest()
+
 
 
 @csrf_exempt
