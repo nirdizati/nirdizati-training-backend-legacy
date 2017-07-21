@@ -28,8 +28,8 @@ def index(request):
 def yolo(request):
     encoding.encode("Production.xes", 5)
     
-    # prediction.regressior("Production.xes", 5, 'simpleIndex', "Kmeans", 'linear')
-    prediction.classifier("Production.xes", 12, 'complexIndex', "None", 'DecisionTree', 'remainingTime', 1500)
+    prediction.regressior("Production.xes", 5, 'simpleIndex', "None", 'linear')
+    # prediction.classifier("Production.xes", 5, 'complexIndex', "None", 'DecisionTree', 'remainingTime', 'default')
     # prediction.classifier("Production.xes", 5, 'simpleIndex', "Kmeans", 'RandomForest')
     # prediction.classifier("Production.xes", 5, 'simpleIndex', "Kmeans", 'DecisionTree')
 

@@ -1,2 +1,3 @@
-Run,Rmse,Mae
-linear_simpleIndex_Kmeans_clustering,198.49888502799834,149.11880265842376
+Run,Rmse,Mae,Rscore
+linear_simpleIndex_Kmeans_clustering,172.88694317490763,133.21538340633074,0.812432268443952
+linear_simpleIndex_None_clustering,588.9838912432509,459.98488166744193,-0.025848174490845199
