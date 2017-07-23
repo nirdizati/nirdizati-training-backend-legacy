@@ -147,19 +147,19 @@ MAX_UPLOAD_SIZE = "104857600"
 # RQ
 RQ_QUEUES = {
     'default': {
-        'HOST': 'localhost',
+        'HOST': '0.0.0.0',
         'PORT': 6379,
         'DB': 0,
         'DEFAULT_TIMEOUT': 3600,
     },
     'high': {
-        'HOST': 'localhost',
+        'HOST': '0.0.0.0',
         'PORT': 6379,
         'DB': 0,
         'DEFAULT_TIMEOUT': 3600,
     },
     'low': {
-        'HOST': 'localhost',
+        'HOST': '0.0.0.0',
         'PORT': 6379,
         'DB': 0,
         'DEFAULT_TIMEOUT': 3600,
