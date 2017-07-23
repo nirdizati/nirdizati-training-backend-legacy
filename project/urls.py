@@ -18,11 +18,13 @@ from django.contrib import admin
 
 urlpatterns = [
 	url(r'^services/', include('services.urls')),
+    url(r'^core_services/', include('core_services.urls')),
     url(r'^logs/', include('logs.urls')),
     url(r'^forecasting/', include('forecasting.urls')),
     url(r'^regression/', include('regression.urls')),
     url(r'^classify/', include('classification.urls')),
     url(r'^encoding/', include('encoding.urls')),
     url(r'^admin/', admin.site.urls),
+    url(r'^django-rq/', include('django_rq.urls')),
 
 ]

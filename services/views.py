@@ -16,8 +16,11 @@ from sklearn.linear_model import LassoCV
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
+
 # Get an instance of a logger
 logger = logging.getLogger("testing")
+
+
 
 def freq_encoding(df, state_list):
 

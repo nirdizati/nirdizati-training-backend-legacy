@@ -1,0 +1,5 @@
+core_results_regg/
+core_results_class/
+core_encodedFiles/
+core_predictionmodels/
+*.pyc 

@@ -2,12 +2,15 @@ import csv
 import datetime
 import json
 import time
+import os
 from os.path import isfile
-
+import pynq as pynq
 import pandas as pd
+import numpy as np
 import untangle
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from sklearn import cluster
 
 
 @csrf_exempt
@@ -17,7 +20,6 @@ def remaining_time_encode(request):
         return HttpResponse()
 
     obj = untangle.parse('logdata/' + filename)
-
     traces = obj.log.trace
 
     header = ['id', 'remainingTime', 'elapsedTime', 'executedActivities']
@@ -81,6 +83,64 @@ def remaining_time_encode(request):
     df = pd.DataFrame(columns=header, data=new_data)
     write_pandas_to_csv(df, filename+'.csv')
     return HttpResponse(json.dumps(data), content_type="application/json")
+
+def bool_freq_encode(request):
+    filename = request.GET['log']
+    prefix_ = request.GET['prefix']
+    encodingmethod = request.GET['encodingmethod']
+    # if isfile("encodedfiles/indexbased_"+filename):
+    #     return HttpResponse()
+
+    obj = untangle.parse('logdata/' + filename)
+
+    unique_events_resource = list()
+    for trace in obj.log.trace:
+        if len(trace.event) > prefix_:
+            for event in trace.event[0:prefix_]:
+                if(event.string[2]['value'] not in unique_events_resource):
+                    unique_events_resource.append(event.string[2]['value']) 
+
+    bool_encoded_traces = list();
+    freq_encoded_traces = list();
+
+    for trace in obj.log.trace:
+        if len(trace.event) >= prefix_:
+            bool_trace = list();
+            freq_trace = list();
+            bool_trace.append(trace.string[0]['value'])
+            freq_trace.append(trace.string[0]['value'])
+            trace_events = list();
+            last_event_timestamp_ = get_timestamp_from_event(trace.event[len(trace.event)-1])
+            last_prefix_remainingTime = get_timestamp_from_event(trace.event[prefix_ - 1])
+
+            for event in trace.event[0:prefix_]:
+                   trace_events.append(event.string[2]['value'])
+            for unique_id in unique_events_resource:
+                if (unique_id in trace_events):
+                    bool_trace.append("1")
+                    freq_trace.append(trace_events.count(unique_id))
+                else: 
+                    bool_trace.append("0")
+                    freq_trace.append("0")
+            bool_encoded_traces.append(bool_trace + [last_event_timestamp_ - last_prefix_remainingTime])
+            freq_encoded_traces.append(freq_trace + [last_event_timestamp_ - last_prefix_remainingTime])            
+
+    with open("encodedfiles/" + filename + "bool_encoded_traces.csv", 'wb') as myfile:
+        wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
+        wr.writerow(["caseId"] + unique_events_resource + ["remainingTime"])
+        for x in bool_encoded_traces:
+            wr.writerow(x)
+
+    with open("encodedfiles/" + filename + "freq_encoded_traces.csv", 'wb') as myfile:
+        wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
+        wr.writerow(["caseId"] + unique_events_resource)
+        for x in freq_encoded_traces:
+            wr.writerow(x)
+    
+    if (encodingmethod == "boolean"):
+        return HttpResponse(json.dumps(bool_encoded_traces), content_type="application/json")
+    else:
+        return HttpResponse(json.dumps(freq_encoded_traces), content_type="application/json")
 
 def get_all_events(traces):
     events = []

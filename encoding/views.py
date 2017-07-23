@@ -3,6 +3,9 @@ import json
 from django.http import HttpResponse
 from os.path import isfile
 import pandas as pd
+import django_rq
+
+
 
 def index(request):
     return HttpResponse()
