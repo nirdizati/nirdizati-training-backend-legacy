@@ -23,8 +23,8 @@ from sklearn import metrics
 
 
 def classifier(fileName, prefix, encoding, cluster, method, label, threshold):
-    # if isfile('core_results_class/' + fileName + '/' + str(prefix) + '/' + method + '_' + encoding + '_'  + cluster + '_clustering.csv'):
-    #     return None
+    if isfile('core_results_class/' + fileName + '/' + str(prefix) + '/' + method + '_' + encoding + '_'  + cluster + '_clustering.csv'):
+        return None
     
     if method == "KNN" :
         clf = KNeighborsClassifier()
