@@ -65,7 +65,17 @@ def encode(fileName, prefix):
             bool_trace = list()
             freq_trace = list()
             trace_event_ids = list()
-            trace_case_id = trace.string[0]['value'].replace('Case', '')
+            if type(trace.string) is list:
+                for i in range(0, len(trace.string)):
+                    if u"concept:name" == trace.string[i]['key']:
+                        trace_case_id = trace.string[i]['value']
+            else:
+                # only has 1 value, so it automatically becomes the case id
+                trace_case_id = trace.string['value']
+            
+            print "============================================="
+            print trace_case_id
+            #trace_case_id = trace.string[0]['value']
 
             bool_trace.append(trace_case_id)
             freq_trace.append(trace_case_id)
@@ -167,11 +177,10 @@ def fast_slow_encode(fileName, prefix, encoding, label, threshold):
         else:
             threshold_ = float(threshold)
 
-        print threshold_
-        print df[label][0]
-        print df[label][0] < threshold_
+        
         df['label'] = df[label] < threshold_
         df = df.sample(frac=1)
+
 
         return df
     return None
