@@ -35,7 +35,7 @@ def classifier(fileName, prefix, encoding, cluster, method, label, threshold):
 
     df = fast_slow_encode(fileName, prefix, encoding, label, threshold)
     
-    train_data, test_data = split_class_data(df)
+    train_data, test_data, original_test_data = split_class_data(df)
     to_predict = 'label'
     auc = 0
     make_dir('core_results_class/' + fileName + '/' + str(prefix) + '/' + label + '/' + str(threshold))
@@ -51,41 +51,49 @@ def classifier(fileName, prefix, encoding, cluster, method, label, threshold):
         for cluster_list in cluster_lists:
             clusterd_train_data = cluster_lists[cluster_list]
             clusterd_test_data = orginal_cluster_lists[cluster_list]
+            orginal_test_clustered_data = orginal_cluster_lists[cluster_list]
+
             
             y = clusterd_train_data[to_predict]
             clusterd_train_data = clusterd_train_data.drop(to_predict, 1)
 
+
             clusterd_test_data = clusterd_test_data.reset_index(drop=True)
-            actual = clusterd_test_data[to_predict]
+            actual = orginal_test_clustered_data[to_predict]
             clusterd_test_data = clusterd_test_data.drop(to_predict, 1)
-            print '__________________________________'
-            #print cluster_lists[cluster_list]
-            
-            clf.fit(clusterd_train_data, y)
-            prediction = clf.predict(clusterd_test_data)
-            
-            scores =  clf.predict_proba(clusterd_test_data)
-            if '1)' in str(scores.shape):
-                auc += 0
+            orginal_test_clustered_data = orginal_test_clustered_data.drop(to_predict, 1)
+
+
+            print '__________________________________ SHAPE'
+            if clusterd_test_data.shape[0] == 0:
+                pass
             else:
-                try:
-                    auc += metrics.roc_auc_score(actual,scores[:,1])
-                    x += 1
-                except: 
-                    auc += 0
+            
+                clf.fit(clusterd_train_data, y)
+                prediction = clf.predict(clusterd_test_data)
                 
+                scores =  clf.predict_proba(clusterd_test_data)
+                if '1)' in str(scores.shape):
+                    auc += 0
+                else:
+                    try:
+                        auc += metrics.roc_auc_score(actual,scores[:,1])
+                        x += 1
+                    except: 
+                        auc += 0
+                    
                         
 
-            clusterd_test_data["actual"] = actual
-            clusterd_test_data["predicted"] = prediction    
+            orginal_test_clustered_data["actual"] = actual
+            orginal_test_clustered_data["predicted"] = prediction    
             
             if writeHeader is True:
-                clusterd_test_data.to_csv('core_results_class/' + fileName + '/' + str(prefix) + '/' + label + '/' + str(threshold) + '/' + 
+                orginal_test_clustered_data.to_csv('core_results_class/' + fileName + '/' + str(prefix) + '/' + label + '/' + str(threshold) + '/' + 
                               method + '_' + encoding + '_'  + cluster + '_clustering.csv', sep=',',header=True, mode='a', index=False)
                 writeHeader = False
 
             else:
-                clusterd_test_data.to_csv('core_results_class/' + fileName + '/' + str(prefix) + '/' + label  + '/' + str(threshold) + '/' + 
+                orginal_test_clustered_data.to_csv('core_results_class/' + fileName + '/' + str(prefix) + '/' + label  + '/' + str(threshold) + '/' + 
                               method + '_' + encoding + '_'  + cluster + '_clustering.csv', sep=',',header=False, mode='a', index=False)
         
         try:
@@ -94,29 +102,27 @@ def classifier(fileName, prefix, encoding, cluster, method, label, threshold):
             auc = 0
     else:
         y = train_data[to_predict]
-
+      
         train_data = train_data.drop(to_predict, 1)
 
         test_data = test_data.reset_index(drop=True)
-        actual = test_data[to_predict]
+        actual = original_test_data[to_predict]
         test_data = test_data.drop(to_predict, 1)
+        original_test_data = original_test_data.drop(to_predict, 1)
 
         clf.fit(train_data, y)
 
         prediction = clf.predict(test_data)
         scores =  clf.predict_proba(test_data)[:,1]
-        print scores
-
-        print len(scores)
-        print len(prediction)
-        test_data["actual"] = actual
-        test_data["predicted"] = prediction
+        
+        original_test_data["actual"] = actual
+        original_test_data["predicted"] = prediction
         #FPR,TPR,thresholds_unsorted=
         auc = metrics.roc_auc_score(actual,scores) # ,pos_label='True')
         #auc = metrics.auc(FPR, TPR)
         
 
-        test_data.to_csv('core_results_class/' + fileName + '/' + str(prefix) + '/' + label  + '/' + str(threshold) + '/' + 
+        original_test_data.to_csv('core_results_class/' + fileName + '/' + str(prefix) + '/' + label  + '/' + str(threshold) + '/' + 
                               method + '_' + encoding + '_'  + cluster + '_clustering.csv', sep=',', mode='w+', index=False)
         print test_data.shape
 
@@ -164,10 +170,8 @@ def regressior(fileName, prefix, encoding, cluster, method):
     if cluster != "None":
         estimator = KMeans(n_clusters=3)
         estimator.fit(train_data)
-        estimator2 = KMeans(n_clusters=3)
-        estimator2.fit(test_data)
-    
-        orginal_cluster_lists = {i: original_test_data.iloc[np.where(estimator.predict(original_test_data.drop('Id', 1)) == i)[0]] for i in range(estimator2.n_clusters)}    
+        
+        orginal_cluster_lists = {i: original_test_data.iloc[np.where(estimator.predict(original_test_data.drop('Id', 1)) == i)[0]] for i in range(estimator.n_clusters)}    
         cluster_lists = {i: train_data.iloc[np.where(estimator.labels_ == i)[0]] for i in range(estimator.n_clusters)}
         # print orginal_cluster_lists
         writeHeader = True
@@ -195,8 +199,11 @@ def regressior(fileName, prefix, encoding, cluster, method):
                 orginal_test_clustered_data.to_csv('core_results_regg/' + fileName + '/' + str(prefix) + '/' +
                               method + '_' + encoding + '_'  + cluster + '_clustering.csv', sep=',',header=False, mode='a', index=False)
     else:
+
         y = train_data['remainingTime']
+        print y
         train_data = train_data.drop('remainingTime', 1)
+       
         regressor.fit(train_data, y)
 
         with open('core_predictionmodels/' + fileName + '/' + str(prefix) + '/' + method + '_' + encoding + '.pkl', 'wb') as fid:
@@ -300,8 +307,6 @@ def prep_data(fileName, prefix, encoding):
 
     train_data = train_data.drop('Id', 1)
     test_data = test_data.drop('Id', 1)
-
-
     test_data = test_data.drop('remainingTime', 1)
 
     return train_data, test_data, original_test_data
@@ -319,11 +324,17 @@ def make_dir(drpath):
 
 def split_class_data(data):
     data = data.sample(frac=1)
+    data = data.drop('duration', 1)
+    data = data.drop('remainingTime', 1)
 
     cases_train_point = int(len(data) * 0.8)
 
     train_df, test_df = train_test_split(data, test_size=0.2, random_state=3)
-    return train_df, test_df
+    orginal_test_df = test_df
+    train_df = train_df.drop('Id', 1)
+    test_df = test_df.drop('Id', 1)
+
+    return train_df, test_df, orginal_test_df
 
 def calculate_results(prediction, actual):
     # true_positive = 0
@@ -367,8 +378,11 @@ def calculate_results(prediction, actual):
     # # auc = metrics.auc(FPR, TPR)
 
     # # fpr_unsorted,tpr_unsorted,thresholds_unsorted=metrics.roc_curve(actual,prediction,pos_label='False')
-    # # auc = metrics.roc_auc_score(actual, prediction, )
+    # # auc = metri cs.roc_auc_score(actual, prediction, )
+    try:
+        f1score = metrics.f1_score(actual, prediction)
+    except: 
+        f1score = 0
     
-    f1score = metrics.f1_score(actual, prediction)
     acc = metrics.accuracy_score(actual, prediction)
     return f1score, acc
