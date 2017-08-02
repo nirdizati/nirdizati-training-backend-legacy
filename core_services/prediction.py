@@ -43,7 +43,7 @@ def classifier(fileName, prefix, encoding, cluster, method, label, threshold):
     if cluster != "None":
         estimator = KMeans(n_clusters=3)
         estimator.fit(train_data)
-        orginal_cluster_lists = {i: test_data.iloc[np.where(estimator.predict(test_data) == i)[0]] for i in range(estimator.n_clusters)}    
+        orginal_cluster_lists = {i: original_test_data.iloc[np.where(estimator.predict(original_test_data.drop('Id', 1)) == i)[0]] for i in range(estimator.n_clusters)}    
         cluster_lists = {i: train_data.iloc[np.where(estimator.labels_ == i)[0]] for i in range(estimator.n_clusters)}
 
         writeHeader = True
@@ -52,6 +52,7 @@ def classifier(fileName, prefix, encoding, cluster, method, label, threshold):
             clusterd_train_data = cluster_lists[cluster_list]
             clusterd_test_data = orginal_cluster_lists[cluster_list]
             orginal_test_clustered_data = orginal_cluster_lists[cluster_list]
+            clusterd_test_data = clusterd_test_data.drop('Id', 1 )
 
             
             y = clusterd_train_data[to_predict]
