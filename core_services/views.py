@@ -26,10 +26,14 @@ def index(request):
 
 
 def yolo(request):
-    encoding.encode("SepsisCasesEventLog.xes", 7)
+    encoding.encode("SepsisCasesEventLog.xes", 10)
     
-    # prediction.regressior("SepsisCasesEventLog.xes", 5, 'simpleIndex', "None", 'linear')
-    prediction.classifier("SepsisCasesEventLog.xes", 8, 'simpleIndex', "Kmeans", 'KNN', 'duration', 'default')
+    # prediction.regressior("SepsisCasesEventLog.xes", 5, 'simpleIndex', "Kmeans", 'lasso')
+    # prediction.classifier("SepsisCasesEventLog.xes", 10, 'complexIndex', "Kmeans", 'KNN', 'duration', 'default')
+    prediction.classifier("SepsisCasesEventLog.xes", 8, 'simpleIndex', "None", 'DecisionTree', 'duration', 'default')
+    prediction.classifier("SepsisCasesEventLog.xes", 8, 'simpleIndex', "Kmeans", 'DecisionTree', 'duration', 'default')
+    prediction.classifier("SepsisCasesEventLog.xes", 8, 'boolean', "Kmeans", 'DecisionTree', 'duration', 'default')
+
     # prediction.classifier("SepsisCasesEventLog.xes", 5, 'simpleIndex', "Kmeans", 'DecisionTree', 'remainingTime', 'default')
 
     # prediction.classifier("Production.xes", 5, 'simpleIndex', "Kmeans", 'RandomForest')

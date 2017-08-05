@@ -17,13 +17,15 @@ from encoding import fast_slow_encode
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.cross_validation import train_test_split
+from sklearn.linear_model import LinearRegression
+
 
 from sklearn import metrics
 
 
 
 def classifier(fileName, prefix, encoding, cluster, method, label, threshold):
-    if isfile('core_results_class/' + fileName + '/' + str(prefix) + '/' + method + '_' + encoding + '_'  + cluster + '_clustering.csv'):
+    if isfile('core_results_class/' + fileName + '/' + str(prefix) + '/' + label + '/' + str(threshold) + '/' + method + '_' + encoding + '_'  + cluster + '_clustering.csv'):
         return None
     
     if method == "KNN" :
@@ -86,7 +88,10 @@ def classifier(fileName, prefix, encoding, cluster, method, label, threshold):
                         
 
             orginal_test_clustered_data["actual"] = actual
-            orginal_test_clustered_data["predicted"] = prediction    
+            orginal_test_clustered_data["actual"] = orginal_test_clustered_data["actual"].apply(lambda x: 'Fast' if x else 'Slow')
+            orginal_test_clustered_data["predicted"] = prediction
+            orginal_test_clustered_data["predicted"] = orginal_test_clustered_data["predicted"].apply(lambda x: 'Fast' if x else 'Slow')
+
             
             if writeHeader is True:
                 orginal_test_clustered_data.to_csv('core_results_class/' + fileName + '/' + str(prefix) + '/' + label + '/' + str(threshold) + '/' + 
@@ -117,7 +122,10 @@ def classifier(fileName, prefix, encoding, cluster, method, label, threshold):
         scores =  clf.predict_proba(test_data)[:,1]
         
         original_test_data["actual"] = actual
+        original_test_data["actual"] = original_test_data["actual"].apply(lambda x: 'Fast' if x else 'Slow')
         original_test_data["predicted"] = prediction
+        original_test_data["predicted"] = original_test_data["predicted"].apply(lambda x: 'Fast' if x else 'Slow')
+
         #FPR,TPR,thresholds_unsorted=
         auc = metrics.roc_auc_score(actual,scores) # ,pos_label='True')
         #auc = metrics.auc(FPR, TPR)
@@ -132,6 +140,12 @@ def classifier(fileName, prefix, encoding, cluster, method, label, threshold):
     actual_ = df['actual'].values
     predicted_ =  df['predicted'].values
     
+    actual_[actual_ == "Fast"] = True
+    actual_[actual_ == "Slow"] = False
+    predicted_[predicted_ =="Fast"] = True
+    predicted_[predicted_ =="Slow"] = False
+
+
     f1score, acc= calculate_results(actual_, predicted_)
 
 
@@ -156,11 +170,14 @@ def regressior(fileName, prefix, encoding, cluster, method):
     if isfile('core_results_regg/' + fileName + '/' + str(prefix) + '/' + method + '_' + encoding + '_'  + cluster + '_clustering.csv'):
         return None
     if method == "linear" :
-        regressor = Lasso(fit_intercept=True, warm_start=True)
+        regressor = LinearRegression(fit_intercept=True)
     elif method == "xgboost" : 
         regressor = xgb.XGBRegressor(n_estimators=2000, max_depth=10)
     elif method == "randomforest":  
         regressor = RandomForestRegressor(n_estimators=50, n_jobs=8, verbose=1)
+    elif method == "lasso":  
+        regressor = Lasso(fit_intercept=True, warm_start=True)
+
 
     train_data, test_data, original_test_data = prep_data(
         fileName, prefix, encoding)
@@ -338,52 +355,59 @@ def split_class_data(data):
     return train_df, test_df, orginal_test_df
 
 def calculate_results(prediction, actual):
-    # true_positive = 0
-    # false_positive = 0
-    # false_negative = 0
-    # true_negative = 0
+    true_positive = 0
+    false_positive = 0
+    false_negative = 0
+    true_negative = 0
 
-    # for i in range(0, len(actual)):
-    #     if actual[i] == True:
-    #         if actual[i] == prediction[i]:
-    #             true_positive += 1
-    #         else:
-    #             false_positive += 1
-    #     else:
-    #         if actual[i] == prediction[i]:
-    #             true_negative += 1
-    #         else:
-    #             false_negative += 1
+    for i in range(0, len(actual)):
+        if actual[i] == True:
+            if actual[i] == prediction[i]:
+                true_positive += 1
+            else:
+                false_positive += 1
+        else:
+            if actual[i] == prediction[i]:
+                true_negative += 1
+            else:
+                false_negative += 1
        
-    #     # if actual[i] == prediction[i] and actual[i] == True:
-    #     #     true_positive += 1
-    #     # elif actual[i] != prediction[i] and actual[i] == True:
-    #     #     false_positive += 1
-    #     # elif actual[i] != prediction[i] and actual[i] == False:
-    #     #     false_negative += 1
-    #     # elif actual[i] == prediction[i] and actual[i] == False:
-    #     #     true_negative += 1
+        # if actual[i] == prediction[i] and actual[i] == True:
+        #     true_positive += 1
+        # elif actual[i] != prediction[i] and actual[i] == True:
+        #     false_positive += 1
+        # elif actual[i] != prediction[i] and actual[i] == False:
+        #     false_negative += 1
+        # elif actual[i] == prediction[i] and actual[i] == False:
+        #     true_negative += 1
 
-    # print 'TP: ' + str(true_positive) + 'FP: ' + str(false_positive) + 'FN: ' + str(false_negative)
+    print 'TP: ' + str(true_positive) + 'FP: ' + str(false_positive) + 'FN: ' + str(false_negative)
     # if true_positive == 0 and false_negative == 0 and false_positive == 0 :
     #     f1score = "uncomputable"
     # else:
+    try:
+        precision = float(true_positive) / (true_positive + false_positive)
 
-    #     precision = float(true_positive) / (true_positive + false_positive)
+        recall = float(true_positive) / (true_positive + false_negative)
+        f1score = (2 * precision * recall) / (precision + recall)
+    except: 
+        f1score = 0
 
-    #     recall = float(true_positive) / (true_positive + false_negative)
-    #     f1score = (2 * precision * recall) / (precision + recall)
-    # acc = float(true_positive + true_negative) / (true_positive + true_negative + false_negative + false_positive )
+    acc = float(true_positive + true_negative) / (true_positive + true_negative + false_negative + false_positive )
     # # TPR = float(true_positive) / (true_positive + false_negative)
     # # FPR = float(false_positive) / (false_positive + true_negative)
     # # auc = metrics.auc(FPR, TPR)
 
     # # fpr_unsorted,tpr_unsorted,thresholds_unsorted=metrics.roc_curve(actual,prediction,pos_label='False')
     # # auc = metri cs.roc_auc_score(actual, prediction, )
-    try:
-        f1score = metrics.f1_score(actual, prediction)
-    except: 
-        f1score = 0
-    
-    acc = metrics.accuracy_score(actual, prediction)
+
+    # try:
+    #     f1score = metrics.f1_score(actual, prediction)
+    # except Exception,e: 
+    #     print str(e)
+    #     f1score = 0
+    # print actual
+    # print "-----------------------------------"
+    # print prediction
+    # acc = metrics.accuracy_score(actual, prediction)
     return f1score, acc
