@@ -43,9 +43,13 @@ def encode(fileName, prefix):
     event_attr_names_header = list()
     event_attr_latest_names = list()
     events_header = list()
-    key_value = 0
+    key_value = 1
 
-    for event_attr in obj.log.trace[0].event[0].string[0:12]:
+    print "============================================="
+    print obj.log.trace[0].event[0].children[0]['key']
+    lenOfAttr = len(obj.log.trace[0].event[0].children)
+
+    for event_attr in obj.log.trace[0].event[prefix - 1].children:
         event_attr_latest_names.append("Latest_" + event_attr['key'])
         event_attr_names.append(event_attr['key'])
 
@@ -73,8 +77,7 @@ def encode(fileName, prefix):
                 # only has 1 value, so it automatically becomes the case id
                 trace_case_id = trace.string['value']
             
-            print "============================================="
-            print trace_case_id
+            
             #trace_case_id = trace.string[0]['value']
 
             bool_trace.append(trace_case_id)
@@ -91,26 +94,51 @@ def encode(fileName, prefix):
             last_prefix_event_attr = list()
             event_attr_values = list()
 
-            for event_attr in trace.event[prefix - 1].string[0:12]:
-                if event_attr['value'] not in attrs_dictionary:
-                    attrs_dictionary[event_attr['value']] = key_value
-                    key_value = key_value + 1
-                last_prefix_event_attr.append(
-                    attrs_dictionary[event_attr['value']])
+            for event_attr in event_attr_names:
+                foundValue_ = False;
+                value_ = 0;
+                for chlid in trace.event[prefix - 1].children:
+                    if event_attr == chlid['key']:
+                        value_ = chlid['value']
+                        foundValue_ = True;
+                if(foundValue_):
+                    if value_ not in attrs_dictionary:
+                        attrs_dictionary[value_] = key_value
+                        key_value = key_value + 1
+                        
+                    last_prefix_event_attr.append(attrs_dictionary[value_])
+                else: 
+                    last_prefix_event_attr.append(0)
+
+
 
             for event in trace.event[0:prefix]:
-                if event.string[2]['value'] not in attrs_dictionary:
-                    attrs_dictionary[event.string[2]['value']] = key_value
+                event_case_id = "FUCKING FUCK"
+                if type(event.string) is list:
+                    for i in range(0, len(event.string)):
+                        if u"concept:name" == event.string[i]['key']:
+                            event_case_id = event.string[i]['value']
+
+                if event_case_id not in attrs_dictionary:
+                    attrs_dictionary[event_case_id] = key_value
                     key_value = key_value + 1
                 trace_event_ids.append(
-                    attrs_dictionary[event.string[2]['value']])
-                for event_attr in event.string[0:12]:
-                    if event_attr['value'] not in attrs_dictionary:
-                        attrs_dictionary[event_attr['value']] = key_value
-                        key_value = key_value + 1
-                    event_attr_values.append(
-                        attrs_dictionary[event_attr['value']])
-
+                    attrs_dictionary[event_case_id])
+                for event_attr in event_attr_names:
+                    foundValue = False;
+                    value = 0;
+                    for chlid in event.children:
+                        if event_attr == chlid['key']:
+                            value = chlid['value']
+                            foundValue = True;
+                    if(foundValue):
+                        if value not in attrs_dictionary:
+                            attrs_dictionary[value] = key_value
+                            key_value = key_value + 1
+                        event_attr_values.append(attrs_dictionary[value])
+                    else: 
+                        event_attr_values.append(0)
+        
                 trace_events.append(event.string[2]['value'])
             complex_index_traces.append(
                 [trace_case_id] + event_attr_values + [last_event_timestamp_ - last_prefix_remainingTime] + [duration])
