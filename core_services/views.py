@@ -9,10 +9,14 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponseBadRequest
 
-
+import zipfile
+import StringIO
 from core_services import encoding, prediction
 from project import tasks
 import pandas as pd
+import time
+from pydblite import Base
+
 
 import numpy as np
 from sklearn.cluster import KMeans
@@ -24,17 +28,35 @@ from sklearn.cluster import DBSCAN
 def index(request):
     return HttpResponse()
 
+def getConfStatus(request):
+    db = Base('backendDB.pdl')
+    if db.exists(): 
+        db.open()
+    records = [];
+    for r in db:
+        print r
+        records.append(r)
+
+    return HttpResponse(json.dumps(records), content_type="application/json")
+
 
 def yolo(request):
-    encoding.encode("SepsisCasesEventLog.xes", 10)
+    db = Base('backendDB.pdl')
+    if db.exists(): 
+        db.open()
+    records = [];
+    for r in db:
+        records.append(r)
+    db.delete(records)
+    db.commit()
+    # encoding.encode("SepsisCasesEventLog.xes", 8)
     
-    # prediction.regressior("SepsisCasesEventLog.xes", 5, 'simpleIndex', "Kmeans", 'lasso')
-    # prediction.classifier("SepsisCasesEventLog.xes", 10, 'complexIndex', "Kmeans", 'KNN', 'duration', 'default')
-    prediction.classifier("SepsisCasesEventLog.xes", 8, 'simpleIndex', "None", 'DecisionTree', 'duration', 'default')
-    prediction.classifier("SepsisCasesEventLog.xes", 8, 'simpleIndex', "Kmeans", 'DecisionTree', 'duration', 'default')
-    prediction.classifier("SepsisCasesEventLog.xes", 8, 'boolean', "Kmeans", 'DecisionTree', 'duration', 'default')
+    # prediction.regressior("SepsisCasesEventLog.xes", 8, 'complexIndex', "Kmeans", 'linear')
+    # prediction.classifier("SepsisCasesEventLog.xes", 8, 'simpleIndex', "None", 'DecisionTree', 'duration', 'default')
+    # prediction.classifier("SepsisCasesEventLog.xes", 8, 'simpleIndex', "Kmeans", 'DecisionTree', 'duration', 'default')
+    # prediction.classifier("SepsisCasesEventLog.xes", 8, 'boolean', "Kmeans", 'DecisionTree', 'duration', 'default')
 
-    # prediction.classifier("SepsisCasesEventLog.xes", 5, 'simpleIndex', "Kmeans", 'DecisionTree', 'remainingTime', 'default')
+    # prediction.classifier("SepsisCasesEventLog.xes", 8, 'simpleIndex', "None", 'DecisionTree', 'remainingTime', 'default')
 
     # prediction.classifier("Production.xes", 5, 'simpleIndex', "Kmeans", 'RandomForest')
     # prediction.classifier("Production.xes", 5, 'simpleIndex', "Kmeans", 'DecisionTree')
@@ -195,28 +217,72 @@ def fileToJsonResults(request):
 @csrf_exempt
 def run_configuration(request):
     if request.method == 'POST':
+        db = Base('backendDB.pdl')
+        # db.create('Type','Log', 'Run', 'Prefix','Rule','Threshold', 'TimeStamp', 'Status', mode="override")
+        if db.exists():
+            db.open()
+        else: 
+            db.create('Type','Log', 'Run', 'Prefix','Rule','Threshold', 'TimeStamp', 'Status')
+
+
         configuration_json = json.loads(request.body)
         print configuration_json
         log = configuration_json["log"]
         prefix = configuration_json['prefix']
         # Encode the file.
         encoding.encode(log, prefix)
+        
+        # make_dir('core_results_queue/' + log + '/' + str(prefix))
+
+        # writeHeader = True;
+        # if isfile('core_results_queue/' + log + '/' + str(prefix) + '/reg_queueStatus.csv'):
+        #     df = pd.read_csv('core_results_queue/' + log + '/' + str(prefix) + '/reg_queueStatus.csv')
+        # else:
+        #     columns=['Run','TimeStamp', 'Status']
+        #     df = pd.DataFrame(columns=columns)
+
         for encodingMethod in configuration_json['encoding']:
             for clustering in configuration_json['clustering']:
                 for regression in configuration_json['regression']:
                     django_rq.enqueue(tasks.regressionTask, log,
                                       prefix, encodingMethod, clustering, regression)
+                    run = regression + '_' + encodingMethod + '_' + clustering
+                    records = [r for r in db if r['Run'] == run and r['Prefix'] == str(prefix) and r['Log'] == log]
+                    # for r in db:
+                    #     if (r['Run'] == run) and (r['Prefix'] == str(prefix)) and (r['Log'] == log):
+                    #         records.append(r)
+                    print records
+                    if not records:
+                        db.insert("Regression", log, run, str(prefix),"NaN","NaN", time.strftime("%b %d %Y %H:%M:%S", time.localtime()), 'queued')
+                    else:
+                        db.update(records[0], TimeStamp=time.strftime("%b %d %Y %H:%M:%S", time.localtime()), Status= 'queued')
+                    # if run in df['Run'].unique():
+                    #     df.loc[df.Run == run, 'TimeStamp'] = time.strftime("%b %d %Y %H:%M:%S", time.localtime())
+                    #     df.loc[df.Run == run, 'Status'] = "queued"
+                    # else: 
+                    #     df.loc[df.shape[0]] = [run, time.strftime("%b %d %Y %H:%M:%S", time.localtime()), 'queued']
+        # print df
+        # print df['Run'] 
+        # df.to_csv('core_results_queue/' + log + '/' + str(prefix) + '/reg_queueStatus.csv', sep=',',header=writeHeader, mode='w+', index=False)
+        db.commit()
     return HttpResponse("YOLO")
 
 @csrf_exempt
 def run_class_configuration(request):
     if request.method == 'POST':
+        db = Base('backendDB.pdl')
+        if db.exists():
+            db.open()
+        else: 
+            db.create('Type','Log', 'Run', 'Prefix','Rule','Threshold', 'TimeStamp', 'Status')
+
         configuration_json = json.loads(request.body)
         print configuration_json
         log = configuration_json["log"]
         prefix = configuration_json['prefix']
         rule = configuration_json['rule']
         threshold = configuration_json['threshold']
+
         # Encode the file.
         encoding.encode(log, prefix)
         for encodingMethod in configuration_json['encoding']:
@@ -224,6 +290,14 @@ def run_class_configuration(request):
                 for classification in configuration_json['classification']:
                     django_rq.enqueue(tasks.classifierTask, log,
                                       prefix, encodingMethod, clustering, classification, rule, threshold)
+                    run = classification + '_' + encodingMethod + '_' + clustering + '_' + rule +  '_' + str(threshold)
+                    records = [r for r in db if r['Run'] == run and r['Prefix'] == str(prefix) and r['Log'] == log]
+                    print records
+                    if not records:
+                        db.insert("Classification", log, run, str(prefix), rule, str(threshold), time.strftime("%b %d %Y %H:%M:%S", time.localtime()), 'queued')
+                    else:
+                        db.update(records[0], TimeStamp=time.strftime("%b %d %Y %H:%M:%S", time.localtime()), Status= 'queued')
+        db.commit()        
     return HttpResponse("YOLO")
 
 
@@ -247,3 +321,55 @@ def downloadCsv(request):
         response['Content-Disposition'] = 'attachment; filename='+ expected_filename
     
     return response
+
+def make_dir(drpath):
+    if not os.path.exists(drpath):
+        try:
+            os.makedirs(drpath)
+        except OSError as exc:  # Guard against race condition
+            if exc.errno != errno.EEXIST:
+                raise
+
+def downloadZip(request):
+    log = request.GET['log']
+    prefix = request.GET['Prefix']
+    res_type = request.GET['restype']
+
+    if res_type == 'class':
+        rule = request.GET['rule']
+        threshold = request.GET['threshold']
+        expected_filename = 'core_results_'+ res_type + '/' + log + '/' + str(prefix) + '/' + rule + '/' + str(threshold)
+        zip_subdir = res_type + '_' + log + '_' + str(prefix) + '_' + rule + '_' + str(threshold) 
+    else:
+        expected_filename = 'core_results_'+ res_type + '/' + log + '/' + str(prefix)
+        zip_subdir = res_type + '_' + log + '_' + str(prefix)
+
+    files = os.listdir(expected_filename)
+    # Files (local path) to put in the .zip
+    # FIXME: Change this (get paths from DB etc)
+    zip_filename = "%s.zip" % zip_subdir
+    # Folder name in ZIP archive which contains the above files
+    # E.g [thearchive.zip]/somefiles/file2.txt
+    # FIXME: Set this to something better
+
+    # Open StringIO to grab in-memory ZIP contents
+    s = StringIO.StringIO()
+
+    # The zip compressor
+    zf = zipfile.ZipFile(s, "w")
+
+    for fpath in files:
+        zip_path = os.path.join(expected_filename, fpath)
+
+        # Add file, at correct path
+        zf.write(expected_filename +'/' + fpath, zip_path)
+
+    # Must close zip for all contents to be written
+    zf.close()
+
+    # Grab ZIP file from in-memory, make response with correct MIME-type
+    resp = HttpResponse(s.getvalue(), content_type= "application/x-zip-compressed")
+    # ..and correct content-disposition
+    resp['Content-Disposition'] = 'attachment; filename=%s' % zip_filename
+
+    return resp

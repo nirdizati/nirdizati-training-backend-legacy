@@ -150,18 +150,18 @@ RQ_QUEUES = {
         'HOST': '0.0.0.0',
         'PORT': 6379,
         'DB': 0,
-        'DEFAULT_TIMEOUT': 3600,
+        'DEFAULT_TIMEOUT': 7200,
     },
     'high': {
         'HOST': '0.0.0.0',
         'PORT': 6379,
         'DB': 0,
-        'DEFAULT_TIMEOUT': 3600,
+        'DEFAULT_TIMEOUT': 7200,
     },
     'low': {
         'HOST': '0.0.0.0',
         'PORT': 6379,
         'DB': 0,
-        'DEFAULT_TIMEOUT': 3600,
+        'DEFAULT_TIMEOUT': 7200,
     }
 }

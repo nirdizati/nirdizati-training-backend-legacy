@@ -38,44 +38,39 @@ def classifier(fileName, prefix, encoding, cluster, method, label, threshold):
     df = fast_slow_encode(fileName, prefix, encoding, label, threshold)
     
     train_data, test_data, original_test_data = split_class_data(df)
-    to_predict = 'label'
+    
     auc = 0
     make_dir('core_results_class/' + fileName + '/' + str(prefix) + '/' + label + '/' + str(threshold))
 
     if cluster != "None":
         estimator = KMeans(n_clusters=3)
-        estimator.fit(train_data)
-        orginal_cluster_lists = {i: original_test_data.iloc[np.where(estimator.predict(original_test_data.drop('Id', 1)) == i)[0]] for i in range(estimator.n_clusters)}    
+        estimator.fit(train_data.drop('actual', 1))
+        orginal_cluster_lists = {i: original_test_data.iloc[np.where(estimator.predict(original_test_data.drop(['Id', 'actual'], 1)) == i)[0]] for i in range(estimator.n_clusters)}    
         cluster_lists = {i: train_data.iloc[np.where(estimator.labels_ == i)[0]] for i in range(estimator.n_clusters)}
 
         writeHeader = True
         x = 0
         for cluster_list in cluster_lists:
+
+            #Train data  
             clusterd_train_data = cluster_lists[cluster_list]
-            clusterd_test_data = orginal_cluster_lists[cluster_list]
-            orginal_test_clustered_data = orginal_cluster_lists[cluster_list]
-            clusterd_test_data = clusterd_test_data.drop('Id', 1 )
-
+            y = clusterd_train_data['actual']
             
-            y = clusterd_train_data[to_predict]
-            clusterd_train_data = clusterd_train_data.drop(to_predict, 1)
-
-
-            clusterd_test_data = clusterd_test_data.reset_index(drop=True)
-            actual = orginal_test_clustered_data[to_predict]
-            clusterd_test_data = clusterd_test_data.drop(to_predict, 1)
-            orginal_test_clustered_data = orginal_test_clustered_data.drop(to_predict, 1)
-
-
-            print '__________________________________ SHAPE'
-            if clusterd_test_data.shape[0] == 0:
+            #Test data   
+            orginal_test_clustered_data = orginal_cluster_lists[cluster_list]
+                     
+            if orginal_test_clustered_data.shape[0] == 0:
                 pass
             else:
             
-                clf.fit(clusterd_train_data, y)
-                prediction = clf.predict(clusterd_test_data)
-                
-                scores =  clf.predict_proba(clusterd_test_data)
+                clf.fit(clusterd_train_data.drop('actual', 1), y)
+                prediction = clf.predict(orginal_test_clustered_data.drop(['Id', 'actual'], 1))
+                scores =  clf.predict_proba(orginal_test_clustered_data.drop(['Id', 'actual'], 1))
+                orginal_test_clustered_data["predicted"] = prediction
+                orginal_test_clustered_data["predicted"] = orginal_test_clustered_data["predicted"].apply(lambda x: 'Fast' if x else 'Slow')
+                orginal_test_clustered_data["actual"] = orginal_test_clustered_data["actual"].apply(lambda x: 'Fast' if x else 'Slow')
+
+
                 if '1)' in str(scores.shape):
                     auc += 0
                 else:
@@ -85,13 +80,6 @@ def classifier(fileName, prefix, encoding, cluster, method, label, threshold):
                     except: 
                         auc += 0
                     
-                        
-
-            orginal_test_clustered_data["actual"] = actual
-            orginal_test_clustered_data["actual"] = orginal_test_clustered_data["actual"].apply(lambda x: 'Fast' if x else 'Slow')
-            orginal_test_clustered_data["predicted"] = prediction
-            orginal_test_clustered_data["predicted"] = orginal_test_clustered_data["predicted"].apply(lambda x: 'Fast' if x else 'Slow')
-
             
             if writeHeader is True:
                 orginal_test_clustered_data.to_csv('core_results_class/' + fileName + '/' + str(prefix) + '/' + label + '/' + str(threshold) + '/' + 
@@ -107,25 +95,17 @@ def classifier(fileName, prefix, encoding, cluster, method, label, threshold):
         except: 
             auc = 0
     else:
-        y = train_data[to_predict]
+        y = train_data['actual']
       
-        train_data = train_data.drop(to_predict, 1)
+        clf.fit(train_data.drop('actual', 1), y)
 
-        test_data = test_data.reset_index(drop=True)
-        actual = original_test_data[to_predict]
-        test_data = test_data.drop(to_predict, 1)
-        original_test_data = original_test_data.drop(to_predict, 1)
-
-        clf.fit(train_data, y)
-
-        prediction = clf.predict(test_data)
-        scores =  clf.predict_proba(test_data)[:,1]
-        
-        original_test_data["actual"] = actual
+        prediction = clf.predict(original_test_data.drop(['Id', 'actual'], 1))
+        scores =  clf.predict_proba(original_test_data.drop(['Id', 'actual'], 1))[:,1]
+        actual = original_test_data["actual"]
         original_test_data["actual"] = original_test_data["actual"].apply(lambda x: 'Fast' if x else 'Slow')
         original_test_data["predicted"] = prediction
         original_test_data["predicted"] = original_test_data["predicted"].apply(lambda x: 'Fast' if x else 'Slow')
-
+        
         #FPR,TPR,thresholds_unsorted=
         auc = metrics.roc_auc_score(actual,scores) # ,pos_label='True')
         #auc = metrics.auc(FPR, TPR)
@@ -252,48 +232,6 @@ def regressior(fileName, prefix, encoding, cluster, method):
 
         writer.writerow({'Run': methodVal, 'Rmse': rmse, 'Mae': mae, 'Rscore' : Rscore})
    
-def randomforestregression(fileName, prefix, encoding, cluster):
-    if isfile('core_results/' + fileName + '/' + str(prefix) + '/' + 'randomforest_' + encoding + '.csv'):
-        return None
-
-    train_data, test_data, original_test_data = prep_data(
-        fileName, prefix, encoding)
-    y = train_data['remainingTime']
-    train_data = train_data.drop('remainingTime', 1)
-    rf.fit(train_data, y)
-
-    make_dir('core_predictionmodels/' + fileName + '/' + str(prefix))
-
-    make_dir('core_results/' + fileName + '/' + str(prefix))
-
-    with open('core_predictionmodels/' + fileName + '/' + str(prefix) + '/' + 'randomforest_' + encoding + '.pkl', 'wb') as fid:
-        cPickle.dump(rf, fid)
-
-    original_test_data['prediction'] = rf.predict(test_data)
-    original_test_data.to_csv('core_results/' + fileName + '/' + str(prefix) +
-                              '/' + 'randomForest_' + encoding + '.csv', sep=',', mode='w+', index=False)
-
-
-def xgboost(fileName, prefix, encoding, cluster):
-    if isfile('core_results/' + fileName + '/' + str(prefix) + '/' + 'xgboost_' + encoding + '.csv'):
-        return None
-    train_data, test_data, original_test_data = prep_data(
-        fileName, prefix, encoding)
-    y = train_data['remainingTime']
-    train_data = train_data.drop('remainingTime', 1)
-    clf.fit(train_data, y)
-
-    make_dir('core_predictionmodels/' + fileName + '/' + str(prefix))
-
-    make_dir('core_results/' + fileName + '/' + str(prefix))
-
-    with open('core_predictionmodels/' + fileName + '/' + str(prefix) + '/' + 'xgboost_' + encoding + '.pkl', 'wb') as fid:
-        cPickle.dump(clf, fid)
-
-    original_test_data['prediction'] = clf.predict(test_data)
-    original_test_data.to_csv('core_results/' + fileName + '/' + str(
-        prefix) + '/' + 'xgboost_' + encoding + '.csv', sep=',', mode='w+', index=False)
-
 
 def split_data(data):
     cases = data['Id'].unique()
