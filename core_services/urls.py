@@ -13,7 +13,11 @@ urlpatterns = [
     url(r'^listAvailableThreshold', views.listAvailableThreshold, name='listAvailableThreshold'),
     url(r'^fileToJsonResults', views.fileToJsonResults, name='fileToJsonResults'),
     url(r'^fileToJsonGeneralResults', views.fileToJsonGeneralResults, name='fileToJsonGeneralResults'),
-    url(r'^downloadCsv', views.downloadCsv, name='downloadCsv')
+    url(r'^downloadCsv', views.downloadCsv, name='downloadCsv'),
+    url(r'^getConfStatus', views.getConfStatus, name='getConfStatus'),
+    url(r'^downloadZip', views.downloadZip, name='downloadZip')
+    
+    
     
 
 ]

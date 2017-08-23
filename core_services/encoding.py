@@ -202,11 +202,12 @@ def fast_slow_encode(fileName, prefix, encoding, label, threshold):
         df = pd.read_csv(filename)
         if threshold == "default":
             threshold_ = df[label].mean()
+            print threshold_
         else:
             threshold_ = float(threshold)
 
         
-        df['label'] = df[label] < threshold_
+        df['actual'] = df[label] < threshold_
         df = df.sample(frac=1)
 
 
