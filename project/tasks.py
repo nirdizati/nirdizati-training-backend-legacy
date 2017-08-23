@@ -36,8 +36,8 @@ def classifierTask(fileName, prefix, encoding, cluster, method, label, threshold
 	db = Base('backendDB.pdl')
 	db.open()
 	run = method + '_' + encoding + '_' + cluster + '_' + label +  '_' + str(threshold)
-	time.sleep(2)
-	records = [r for r in db if r['Run'] == run and r['Prefix'] == str(prefix) and r['Log'] == fileName]
+	#time.sleep(2)
+	records = [r for r in db if r['Run'] == run and r['Prefix'] == str(prefix) and r['Log'] == fileName and r['Rule'] == label and r['Threshold'] == str(threshold)]
 	db.update(records[0], TimeStamp=time.strftime("%b %d %Y %H:%M:%S", time.localtime()), Status='Running')
 	db.commit()
 	try:
@@ -47,7 +47,7 @@ def classifierTask(fileName, prefix, encoding, cluster, method, label, threshold
 		db.commit()
 
 	except Exception,e:  # Guard against race condition
-		records = [r for r in db if r['Run'] == run and r['Prefix'] == str(prefix) and r['Log'] == fileName]
+		records = [r for r in db if r['Run'] == run and r['Prefix'] == str(prefix) and r['Log'] == fileName and r['Rule'] == label and r['Threshold'] == str(threshold)]
 		db.update(records[0], TimeStamp=time.strftime("%b %d %Y %H:%M:%S", time.localtime()), Status='Failed: ' + str(e))
 		db.commit()
 		raise

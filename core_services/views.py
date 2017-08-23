@@ -42,8 +42,10 @@ def getConfStatus(request):
 
 def yolo(request):
     db = Base('backendDB.pdl')
-    if db.exists(): 
-        db.open()
+    db.create('Type','Log', 'Run', 'Prefix','Rule','Threshold', 'TimeStamp', 'Status', mode="override")
+
+    # if db.exists(): 
+    #     db.open()
     records = [];
     for r in db:
         records.append(r)
@@ -232,15 +234,6 @@ def run_configuration(request):
         # Encode the file.
         encoding.encode(log, prefix)
         
-        # make_dir('core_results_queue/' + log + '/' + str(prefix))
-
-        # writeHeader = True;
-        # if isfile('core_results_queue/' + log + '/' + str(prefix) + '/reg_queueStatus.csv'):
-        #     df = pd.read_csv('core_results_queue/' + log + '/' + str(prefix) + '/reg_queueStatus.csv')
-        # else:
-        #     columns=['Run','TimeStamp', 'Status']
-        #     df = pd.DataFrame(columns=columns)
-
         for encodingMethod in configuration_json['encoding']:
             for clustering in configuration_json['clustering']:
                 for regression in configuration_json['regression']:
@@ -291,7 +284,7 @@ def run_class_configuration(request):
                     django_rq.enqueue(tasks.classifierTask, log,
                                       prefix, encodingMethod, clustering, classification, rule, threshold)
                     run = classification + '_' + encodingMethod + '_' + clustering + '_' + rule +  '_' + str(threshold)
-                    records = [r for r in db if r['Run'] == run and r['Prefix'] == str(prefix) and r['Log'] == log]
+                    records = [r for r in db if r['Run'] == run and r['Prefix'] == str(prefix) and r['Log'] == log and r['Rule'] == rule and r['Threshold'] == str(threshold)]
                     print records
                     if not records:
                         db.insert("Classification", log, run, str(prefix), rule, str(threshold), time.strftime("%b %d %Y %H:%M:%S", time.localtime()), 'queued')
