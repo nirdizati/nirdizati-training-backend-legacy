@@ -137,7 +137,7 @@ def fast_slow_encode(request):
             else:
                 df['prefix_'+str(i)].apply(str)
 
-        df = df.sample(frac=1)
+        # df = df.sample(frac=1)
 
         return df
     return None
@@ -185,7 +185,7 @@ def ltl_encode(request):
             else:
                 df['prefix_'+str(i)].apply(str)
 
-        df = df.sample(frac=1)
+        # df = df.sample(frac=1)
 
         return df
     return None

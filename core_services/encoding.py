@@ -208,7 +208,7 @@ def fast_slow_encode(fileName, prefix, encoding, label, threshold):
 
         
         df['actual'] = df[label] < threshold_
-        df = df.sample(frac=1)
+        # df = df.sample(frac=1)
 
 
         return df
