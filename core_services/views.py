@@ -283,7 +283,7 @@ def run_class_configuration(request):
                 for classification in configuration_json['classification']:
                     django_rq.enqueue(tasks.classifierTask, log,
                                       prefix, encodingMethod, clustering, classification, rule, threshold)
-                    run = classification + '_' + encodingMethod + '_' + clustering + '_' + rule +  '_' + str(threshold)
+                    run = classification + '_' + encodingMethod + '_' + clustering
                     records = [r for r in db if r['Run'] == run and r['Prefix'] == str(prefix) and r['Log'] == log and r['Rule'] == rule and r['Threshold'] == str(threshold)]
                     print records
                     if not records:
