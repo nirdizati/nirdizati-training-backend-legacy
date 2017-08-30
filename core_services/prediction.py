@@ -55,9 +55,10 @@ def classifier(fileName, prefix, encoding, cluster, method, label, threshold):
             #Train data  
             clusterd_train_data = cluster_lists[cluster_list]
             y = clusterd_train_data['actual']
-            
             #Test data   
             orginal_test_clustered_data = orginal_cluster_lists[cluster_list]
+            actual = orginal_test_clustered_data['actual']
+
                      
             if orginal_test_clustered_data.shape[0] == 0:
                 pass
@@ -77,7 +78,7 @@ def classifier(fileName, prefix, encoding, cluster, method, label, threshold):
                     try:
                         auc += metrics.roc_auc_score(actual,scores[:,1])
                         x += 1
-                    except: 
+                    except Exception,e: 
                         auc += 0
                     
             
@@ -94,6 +95,7 @@ def classifier(fileName, prefix, encoding, cluster, method, label, threshold):
             auc = float(auc) / x
         except: 
             auc = 0
+            print "x error"
     else:
         y = train_data['actual']
       

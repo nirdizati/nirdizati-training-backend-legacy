@@ -35,8 +35,7 @@ def regressionTask(fileName, prefix, encoding, cluster, regressionType):
 def classifierTask(fileName, prefix, encoding, cluster, method, label, threshold):
 	db = Base('backendDB.pdl')
 	db.open()
-	run = method + '_' + encoding + '_' + cluster + '_' + label +  '_' + str(threshold)
-	#time.sleep(2)
+	run = method + '_' + encoding + '_' + cluster
 	records = [r for r in db if r['Run'] == run and r['Prefix'] == str(prefix) and r['Log'] == fileName and r['Rule'] == label and r['Threshold'] == str(threshold)]
 	db.update(records[0], TimeStamp=time.strftime("%b %d %Y %H:%M:%S", time.localtime()), Status='Running')
 	db.commit()
