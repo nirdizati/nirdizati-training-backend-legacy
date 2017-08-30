@@ -113,7 +113,7 @@ def encode(fileName, prefix):
 
 
             for event in trace.event[0:prefix]:
-                event_case_id = "FUCKING FUCK"
+                event_case_id = "event_case_id"
                 if type(event.string) is list:
                     for i in range(0, len(event.string)):
                         if u"concept:name" == event.string[i]['key']:
